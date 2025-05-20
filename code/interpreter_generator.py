@@ -7,9 +7,14 @@ import exam_elements_set
 
 class PDF_Creator:
     def __init__(
-        self, out_path: str, parsed_document: dict[str, list[list[Exam_Element]]]
+        self,
+        out_path: str,
+        parsed_document: dict[str, list[list[Exam_Element]]],
+        font: str,
     ):
         self.path = out_path
+        self.font = font
+        self.margin = 1.5 * cm
         self.parsed_document = parsed_document
 
     def create_empty_pdf(self):
@@ -23,7 +28,12 @@ class PDF_Creator:
                 for exam_element in keyword_block:
                     if exam_element:
                         self.current_height = exam_element.add_to_pdf(
-                            self.canvas, self.height, self.current_height
+                            self.canvas,
+                            self.height,
+                            self.width,
+                            self.current_height,
+                            self.font,
+                            self.margin,
                         )
 
     def save_pdf(self):
