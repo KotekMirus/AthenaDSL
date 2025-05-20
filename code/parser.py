@@ -3,10 +3,12 @@ import exam_elements_set
 from exam_elements_handlers import Exam_Element
 
 
-def extract_blocks(whole_text_tokenized) -> list[list[list[str]]]:
+def extract_blocks(whole_text_tokenized: list[list[str]]) -> list[list[list[str]]]:
     blocks_starting_points: int = []
     blocks: list[list[list[str]]] = []
     for index, line in enumerate(whole_text_tokenized):
+        if not line:
+            continue
         command: str = line[0]
         if command in exam_elements_set.blocks_starting_keywords:
             blocks_starting_points.append(index)
@@ -21,9 +23,11 @@ def extract_blocks(whole_text_tokenized) -> list[list[list[str]]]:
     return blocks
 
 
-def detect_content_type(tokenized_line: list[str]) -> Exam_Element | None:
+def detect_content_type(
+    tokenized_line: list[str],
+) -> tuple[Exam_Element, str] | tuple[None, None]:
     if not tokenized_line:
-        return None
+        return None, None
     command: str = tokenized_line.pop(0)
     class_handler: Type[Exam_Element] = exam_elements_set.exam_elements_dictionary.get(
         command
@@ -34,14 +38,16 @@ def detect_content_type(tokenized_line: list[str]) -> Exam_Element | None:
     return exam_element, command
 
 
-def parse_document(whole_text_tokenized):
-    exam_parts = {
+def parse_document(
+    whole_text_tokenized: list[list[str]],
+) -> dict[str, list[list[Exam_Element]]]:
+    exam_parts: dict[str, list[list[Exam_Element]]] = {
         part_name: [] for part_name in exam_elements_set.blocks_starting_keywords
     }
-    blocks = extract_blocks(whole_text_tokenized)
+    blocks: list[list[list[str]]] = extract_blocks(whole_text_tokenized)
     for block in blocks:
-        block_type = None
-        part_of_exam = []
+        block_type: str | None = None
+        part_of_exam: list[Exam_Element] = []
         for line in block:
             exam_element, element_name = detect_content_type(line)
             part_of_exam.append(exam_element)

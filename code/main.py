@@ -1,8 +1,12 @@
 import tokenizer as tokenizer
 import parser as parser
-import interpreter as interpreter
+import interpreter_generator as interpreter
 
 if __name__ == "__main__":
-    file = open("code/sample_test.txt", encoding="utf-8")
+    file = open("sample_test.txt", encoding="utf-8")
     whole_text_tokenized = tokenizer.segment_text(file.read())
-    print(parser.parse_document(whole_text_tokenized))
+    parsed_document = parser.parse_document(whole_text_tokenized)
+    pdf = interpreter.PDF_Creator("TEST.pdf", parsed_document)
+    pdf.create_empty_pdf()
+    pdf.add_to_pdf()
+    pdf.save_pdf()
