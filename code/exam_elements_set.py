@@ -13,7 +13,7 @@ from exam_elements_handlers import (
     Configuration,
 )
 
-blocks_starting_keywords = ["tytuł", "pytanie", "konfiguracja"]
+blocks_starting_keywords = ["konfiguracja", "tytuł", "pytanie"]
 
 exam_elements_dictionary = {
     "tytuł": Title,
