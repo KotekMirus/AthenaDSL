@@ -29,3 +29,5 @@ exam_elements_dictionary = {
     "ponumeruj": Number_Things,
     "konfiguracja": Configuration,
 }
+
+options_dictionary = {"zakres": "range", "jednostka": "unit"}

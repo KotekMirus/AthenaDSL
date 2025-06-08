@@ -244,18 +244,66 @@ class Answer(Exam_Element):
 
 class Timeline(Exam_Element):
     def __init__(self, arguments: list[str]):
-        pass
+        from exam_elements_set import options_dictionary
+
+        for argument in arguments:
+            if argument in options_dictionary:
+                if options_dictionary[argument] == "range":
+                    self.range: list[int] = [
+                        int(number)
+                        for number in arguments[arguments.index(argument) + 1].split(
+                            ","
+                        )
+                    ]
+                elif options_dictionary[argument] == "unit":
+                    self.unit: int = int(arguments[arguments.index(argument) + 1])
 
     def add_to_pdf(
         self,
         canvas: canvas,
-        height: float,
         width: float,
         current_height: float,
-        font: str,
         margin: float,
     ) -> float:
-        return 90
+        current_height -= 0.45 * cm
+        rect_width: float = (width - 2 * margin) * 0.9
+        rect_height: float = rect_width * 0.055
+        triangle_base: float = rect_width * 0.1
+        offset: float = (triangle_base - rect_height) / 2
+        canvas.rect(
+            margin,
+            current_height - offset,
+            rect_width,
+            rect_height,
+            stroke=1,
+            fill=0,
+        )
+        canvas.line(
+            margin + rect_width,
+            current_height - 2 * offset,
+            margin + rect_width,
+            current_height + rect_height,
+        )
+        canvas.line(
+            margin + rect_width,
+            current_height - 2 * offset,
+            width - margin,
+            current_height + rect_height / 2,
+        )
+        canvas.line(
+            margin + rect_width,
+            current_height + rect_height,
+            width - margin,
+            current_height - offset,
+        )
+        for position in range(self.unit):
+            canvas.line(
+                margin + ((rect_width / self.unit) * (position + 1)),
+                current_height - offset,
+                margin + ((rect_width / self.unit) * (position + 1)),
+                current_height - offset + rect_height,
+            )
+        return current_height - triangle_base
 
 
 class Box(Exam_Element):
@@ -413,10 +461,22 @@ class Exam_Part:
         question_height: float = question.get_height(
             self.width, self.font, self.margin, self.current_question_number
         )
-        answers_height, orientation, rows_heights = Answer.get_all_answers_height(
-            self.width, self.font, self.margin, self.chunk_size, self.block
-        )
-        block_height: float = question_height + answers_height + (0.2 * cm)
+        timeline_height: float = 0
+        answers_height: float = 0
+        orientation: int = 0
+        rows_heights: list[float] = []
+        has_answers: bool = any(type(element) is Answer for element in self.block)
+        if has_answers:
+            answers_height, orientation, rows_heights = Answer.get_all_answers_height(
+                self.width, self.font, self.margin, self.chunk_size, self.block
+            )
+        has_timeline: bool = any(type(element) is Timeline for element in self.block)
+        if has_timeline:
+            pass
+        # timeline_height = Timeline.get_height()  # dopracować
+        block_height: float = (
+            question_height + answers_height + (0.2 * cm)
+        )  # rozszerzyć
         if self.current_height - block_height < self.margin:
             self.canvas.showPage()
             self.canvas.setFont(self.font, 12)
@@ -473,4 +533,11 @@ class Exam_Part:
                         self.font,
                         self.margin,
                     )
+            elif type(exam_element) is Timeline:
+                self.current_height = exam_element.add_to_pdf(
+                    self.canvas,
+                    self.width,
+                    self.current_height,
+                    self.margin,
+                )
         return self.current_height
