@@ -246,6 +246,9 @@ class Timeline(Exam_Element):
     def __init__(self, arguments: list[str]):
         from exam_elements_set import options_dictionary
 
+        self.font: str = "Helvetica"
+        self.font_size: int = 10
+
         for argument in arguments:
             if argument in options_dictionary:
                 if options_dictionary[argument] == "range":
@@ -258,18 +261,31 @@ class Timeline(Exam_Element):
                 elif options_dictionary[argument] == "unit":
                     self.unit: int = int(arguments[arguments.index(argument) + 1])
 
+    @staticmethod
+    def get_height(width, margin) -> float:
+        rect_width: float = (width - 2 * margin) * 0.9
+        rect_height: float = rect_width * 0.055
+        line_spacing: float = 10 * 1.2
+        return rect_height + line_spacing + 0.45 * cm
+
     def add_to_pdf(
         self,
         canvas: canvas,
+        height: float,
         width: float,
         current_height: float,
         margin: float,
     ) -> float:
+        if current_height - Timeline.get_height(width, margin) < margin:
+            canvas.showPage()
+            canvas.setFont(self.font, self.font_size)
+            current_height = height - margin
         current_height -= 0.45 * cm
         rect_width: float = (width - 2 * margin) * 0.9
         rect_height: float = rect_width * 0.055
         triangle_base: float = rect_width * 0.1
         offset: float = (triangle_base - rect_height) / 2
+        line_spacing: float = self.font_size * 1.2
         canvas.rect(
             margin,
             current_height - offset,
@@ -288,13 +304,13 @@ class Timeline(Exam_Element):
             margin + rect_width,
             current_height - 2 * offset,
             width - margin,
-            current_height + rect_height / 2,
+            current_height,
         )
         canvas.line(
             margin + rect_width,
             current_height + rect_height,
             width - margin,
-            current_height - offset,
+            current_height,
         )
         for position in range(self.unit):
             canvas.line(
@@ -303,7 +319,15 @@ class Timeline(Exam_Element):
                 margin + ((rect_width / self.unit) * (position + 1)),
                 current_height - offset + rect_height,
             )
-        return current_height - triangle_base
+        canvas.setFont(self.font, self.font_size)
+        canvas.drawString(margin, current_height - rect_height, str(self.range[0]))
+        canvas.drawString(
+            (margin + rect_width)
+            - (pdfmetrics.stringWidth(str(self.range[1]), self.font, self.font_size)),
+            current_height - rect_height,
+            str(self.range[1]),
+        )
+        return current_height - rect_height - line_spacing
 
 
 class Box(Exam_Element):
@@ -472,11 +496,10 @@ class Exam_Part:
             )
         has_timeline: bool = any(type(element) is Timeline for element in self.block)
         if has_timeline:
-            pass
-        # timeline_height = Timeline.get_height()  # dopracować
+            timeline_height = Timeline.get_height(self.width, self.margin)
         block_height: float = (
-            question_height + answers_height + (0.2 * cm)
-        )  # rozszerzyć
+            question_height + answers_height + timeline_height + (0.2 * cm)
+        )
         if self.current_height - block_height < self.margin:
             self.canvas.showPage()
             self.canvas.setFont(self.font, 12)
@@ -492,6 +515,10 @@ class Exam_Part:
         )
         self.current_height -= 0.2 * cm
         current_horizontal_answer_number: int = 0
+        all_answers_count: int = 0
+        for exam_element in self.block:
+            if type(exam_element) is Answer:
+                all_answers_count += 1
         for exam_element in self.block:
             if type(exam_element) is Answer:
                 if orientation == 1:
@@ -516,14 +543,19 @@ class Exam_Part:
                         self.chunk_size,
                         current_horizontal_answer_number % self.chunk_size,
                     )
-                    if current_horizontal_answer_number % self.chunk_size == 3 and int(
-                        (current_horizontal_answer_number + 1) / 4
-                    ) < len(rows_heights):
+                    if (
+                        current_horizontal_answer_number % self.chunk_size
+                        == self.chunk_size - 1
+                        and int((current_horizontal_answer_number + 1) / 4)
+                        < len(rows_heights)
+                    ):
                         self.current_height -= (
                             rows_heights[int(current_horizontal_answer_number / 4)]
                             + 0.15 * cm
                         )
                     current_horizontal_answer_number += 1
+                    if current_horizontal_answer_number == all_answers_count:
+                        self.current_height -= rows_heights[-1]
                 else:
                     self.current_height = exam_element.add_to_pdf_vertical(
                         self.canvas,
@@ -536,6 +568,7 @@ class Exam_Part:
             elif type(exam_element) is Timeline:
                 self.current_height = exam_element.add_to_pdf(
                     self.canvas,
+                    self.height,
                     self.width,
                     self.current_height,
                     self.margin,
