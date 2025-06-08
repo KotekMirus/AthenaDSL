@@ -48,6 +48,9 @@ class Title(Exam_Element):
         title_height: float = len(lines) * line_spacing
         if current_height - title_height < margin:
             canvas.showPage()
+            canvas.setFillColorRGB(1, 1, 1)
+            canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+            canvas.setFillColorRGB(0, 0, 0)
             canvas.setFont(font, self.font_size)
             current_height = height - margin
         canvas.setFont(font, self.font_size)
@@ -91,6 +94,9 @@ class Question(Exam_Element):
         question_height: float = len(lines) * line_spacing
         if current_height - question_height < margin:
             canvas.showPage()
+            canvas.setFillColorRGB(1, 1, 1)
+            canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+            canvas.setFillColorRGB(0, 0, 0)
             canvas.setFont(font, self.font_size)
             current_height = height - margin
         canvas.setFont(font, self.font_size)
@@ -200,6 +206,9 @@ class Answer(Exam_Element):
         answer_height: float = len(lines) * line_spacing
         if current_height - answer_height < margin:
             canvas.showPage()
+            canvas.setFillColorRGB(1, 1, 1)
+            canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+            canvas.setFillColorRGB(0, 0, 0)
             canvas.setFont(font, self.font_size)
             current_height = height - margin
         canvas.setFont(font, self.font_size)
@@ -278,6 +287,9 @@ class Timeline(Exam_Element):
     ) -> float:
         if current_height - Timeline.get_height(width, margin) < margin:
             canvas.showPage()
+            canvas.setFillColorRGB(1, 1, 1)
+            canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+            canvas.setFillColorRGB(0, 0, 0)
             canvas.setFont(self.font, self.font_size)
             current_height = height - margin
         current_height -= 0.45 * cm
@@ -502,6 +514,9 @@ class Exam_Part:
         )
         if self.current_height - block_height < self.margin:
             self.canvas.showPage()
+            self.canvas.setFillColorRGB(1, 1, 1)
+            self.canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+            self.canvas.setFillColorRGB(0, 0, 0)
             self.canvas.setFont(self.font, 12)
             self.current_height = self.height - self.margin
         self.current_height = question.add_to_pdf(
@@ -531,6 +546,11 @@ class Exam_Part:
                             < self.margin
                         ):
                             self.canvas.showPage()
+                            self.canvas.setFillColorRGB(1, 1, 1)
+                            self.canvas.rect(
+                                0, 0, self.width, self.height, fill=1, stroke=0
+                            )
+                            self.canvas.setFillColorRGB(0, 0, 0)
                             self.canvas.setFont(self.font, 12)
                             self.current_height = self.height - self.margin
                     exam_element.add_to_pdf_horizontal(

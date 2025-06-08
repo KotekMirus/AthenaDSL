@@ -22,6 +22,9 @@ class PDF_Creator:
         self.canvas: canvas = canvas.Canvas(self.path, pagesize=A4)
         self.width, self.height = A4  # 210mm x 297mm or in points: 595 x 842
         self.current_height: float = self.height - self.margin
+        self.canvas.setFillColorRGB(1, 1, 1)
+        self.canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+        self.canvas.setFillColorRGB(0, 0, 0)
 
     def add_to_pdf(self):
         for keyword in exam_elements_set.blocks_starting_keywords:
