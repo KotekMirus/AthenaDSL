@@ -344,7 +344,25 @@ class Timeline(Exam_Element):
 
 class Box(Exam_Element):
     def __init__(self, arguments: list[str]):
-        pass
+        self.gap_between_lines: float = 29
+        self.square_side_size: float = 12
+        from exam_elements_set import options_dictionary
+
+        for argument in arguments:
+            if argument in options_dictionary:
+                if options_dictionary[argument] in ["lines", "grid", "empty"]:
+                    self.type: str = options_dictionary[argument]
+                    self.size: int = int(arguments[arguments.index(argument) + 1])
+
+    def get_height(self) -> float:
+        height: float = 0
+        if self.type == "lines":
+            height = self.size * self.gap_between_lines
+        elif self.type == "grid":
+            height = (self.size + 1) * self.square_side_size
+        elif self.type == "empty":
+            height = self.size * self.gap_between_lines
+        return height
 
     def add_to_pdf(
         self,
@@ -352,10 +370,54 @@ class Box(Exam_Element):
         height: float,
         width: float,
         current_height: float,
-        font: str,
         margin: float,
     ) -> float:
-        return 90
+        box_height: float = self.get_height()
+        if current_height - box_height < margin:
+            canvas.showPage()
+            canvas.setFillColorRGB(1, 1, 1)
+            canvas.rect(0, 0, width, height, fill=1, stroke=0)
+            canvas.setFillColorRGB(0, 0, 0)
+            current_height = height - margin
+        if self.type == "lines":
+            canvas.setLineWidth(0.4)
+            current_height -= 0.5 * self.gap_between_lines
+            for _ in range(self.size):
+                canvas.line(
+                    margin,
+                    current_height,
+                    width - margin,
+                    current_height,
+                )
+                current_height -= self.gap_between_lines
+            current_height += 0.5 * self.gap_between_lines
+            canvas.setLineWidth(1)
+        elif self.type == "grid":
+            canvas.setLineWidth(0.3)
+            for _ in range(self.size):
+                canvas.line(margin, current_height, width - margin, current_height)
+                current_width: float = margin
+                while current_width < width - margin:
+                    canvas.line(
+                        current_width,
+                        current_height,
+                        current_width,
+                        current_height - self.square_side_size,
+                    )
+                    current_width += self.square_side_size
+                current_height -= self.square_side_size
+            canvas.line(
+                margin,
+                current_height,
+                width - margin,
+                current_height,
+            )
+            current_height -= self.square_side_size
+            canvas.setLineWidth(1)
+        elif self.type == "empty":
+            for _ in range(self.size):
+                current_height -= self.gap_between_lines
+        return current_height
 
 
 class Pie_Chart(Exam_Element):
@@ -586,6 +648,14 @@ class Exam_Part:
                         self.margin,
                     )
             elif type(exam_element) is Timeline:
+                self.current_height = exam_element.add_to_pdf(
+                    self.canvas,
+                    self.height,
+                    self.width,
+                    self.current_height,
+                    self.margin,
+                )
+            elif type(exam_element) is Box:
                 self.current_height = exam_element.add_to_pdf(
                     self.canvas,
                     self.height,

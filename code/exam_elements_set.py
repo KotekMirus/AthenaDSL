@@ -30,4 +30,10 @@ exam_elements_dictionary = {
     "konfiguracja": Configuration,
 }
 
-options_dictionary = {"zakres": "range", "jednostka": "unit"}
+options_dictionary = {
+    "zakres": "range",
+    "jednostka": "unit",
+    "linie": "lines",
+    "kratka": "grid",
+    "puste": "empty",
+}
