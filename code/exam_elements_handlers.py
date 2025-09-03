@@ -3,6 +3,10 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import cm
+from reportlab.graphics import renderPDF
+from reportlab.graphics.charts.piecharts import Pie
+from reportlab.graphics.shapes import Drawing
+from reportlab.lib import colors
 
 
 def split_text_to_lines(
@@ -422,7 +426,26 @@ class Box(Exam_Element):
 
 class Pie_Chart(Exam_Element):
     def __init__(self, arguments: list[str]):
-        pass
+        self.numbers: list[int] = []
+        self.labels: list[str] = []
+        label: str = ""
+        for argument in arguments:
+            if argument[0] == "#":
+                if len(self.numbers) > 0:
+                    self.labels.append(label)
+                    label = ""
+                self.numbers.append(int(argument[1:]))
+            else:
+                if label:
+                    label += " " + argument
+                else:
+                    if argument == "_":
+                        label = 7 * "_"
+                    elif argument == "|":
+                        label = ""
+                    else:
+                        label = argument
+        self.labels.append(label)
 
     def add_to_pdf(
         self,
@@ -433,7 +456,34 @@ class Pie_Chart(Exam_Element):
         font: str,
         margin: float,
     ) -> float:
-        pass
+        drawing_side_length: int = int(0.27 * width)
+        if current_height - drawing_side_length < margin:
+            canvas.showPage()
+            canvas.setFillColorRGB(1, 1, 1)
+            canvas.rect(0, 0, width, height, fill=1, stroke=0)
+            canvas.setFillColorRGB(0, 0, 0)
+            current_height = height - margin
+        drawing: Drawing = Drawing(drawing_side_length, drawing_side_length)
+        pie_chart: Pie = Pie()
+        pie_chart.x = 0
+        pie_chart.y = 0
+        pie_chart.width = drawing_side_length
+        pie_chart.height = drawing_side_length
+        pie_chart.data = self.numbers
+        pie_chart.labels = self.labels
+        pie_chart.sideLabels = True
+        for i in range(len(self.numbers)):
+            pie_chart.slices[i].fillColor = colors.white
+            pie_chart.slices[i].fontName = font
+            pie_chart.slices[i].strokeWidth = 1.5
+        drawing.add(pie_chart)
+        renderPDF.draw(
+            drawing,
+            canvas,
+            width / 2 - drawing_side_length / 2,
+            current_height - drawing_side_length,
+        )
+        return current_height - drawing_side_length
 
 
 class True_False_Table(Exam_Element):
@@ -661,6 +711,15 @@ class Exam_Part:
                     self.height,
                     self.width,
                     self.current_height,
+                    self.margin,
+                )
+            elif type(exam_element) is Pie_Chart:
+                self.current_height = exam_element.add_to_pdf(
+                    self.canvas,
+                    self.height,
+                    self.width,
+                    self.current_height,
+                    self.font,
                     self.margin,
                 )
         return self.current_height
