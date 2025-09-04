@@ -488,7 +488,29 @@ class Pie_Chart(Exam_Element):
 
 class True_False_Table(Exam_Element):
     def __init__(self, arguments: list[str]):
-        pass
+        self.words: list[str] = arguments
+        self.font_size: int = 11
+
+    @staticmethod
+    def get_height(
+        width: float, margin: float, font: str, block: list[Exam_Element]
+    ) -> float:
+        block_copy: list[Exam_Element] = copy.deepcopy(block)
+        for exam_element in block_copy:
+            if type(exam_element) is not True_False_Table:
+                exam_element = None
+        table_elements_list: list[True_False_Table] = [
+            item for item in block_copy if item is not None
+        ]
+        line_spacing: float = table_elements_list[0].font_size * 1.2
+        table_height: float = 0
+        for table_element in table_elements_list:
+            lines: list[str] = split_text_to_lines(
+                table_element.words, width - 5 * margin, font, table_element.font_size
+            )
+            sentence_height: float = len(lines) * line_spacing
+            table_height += sentence_height + 0.265 * line_spacing
+        return table_height
 
     def add_to_pdf(
         self,
@@ -499,7 +521,64 @@ class True_False_Table(Exam_Element):
         font: str,
         margin: float,
     ) -> float:
-        pass
+        line_spacing: float = self.font_size * 1.2
+        lines: list[str] = split_text_to_lines(
+            self.words, width - 5 * margin, font, self.font_size
+        )
+        sentence_height: float = len(lines) * line_spacing
+        if current_height - sentence_height - 0.265 * line_spacing < margin:
+            canvas.showPage()
+            canvas.setFillColorRGB(1, 1, 1)
+            canvas.rect(0, 0, width, height, fill=1, stroke=0)
+            canvas.setFillColorRGB(0, 0, 0)
+            current_height = height - margin
+        canvas.line(
+            margin,
+            current_height + line_spacing,
+            width - margin,
+            current_height + line_spacing,
+        )
+        canvas.line(
+            margin,
+            current_height + line_spacing,
+            margin,
+            current_height + line_spacing - sentence_height - 0.265 * line_spacing,
+        )
+        canvas.line(
+            width - 2 * margin,
+            current_height + line_spacing,
+            width - 2 * margin,
+            current_height + line_spacing - sentence_height - 0.265 * line_spacing,
+        )
+        canvas.line(
+            width - 1.5 * margin,
+            current_height + line_spacing,
+            width - 1.5 * margin,
+            current_height + line_spacing - sentence_height - 0.265 * line_spacing,
+        )
+        canvas.line(
+            width - margin,
+            current_height + line_spacing,
+            width - margin,
+            current_height + line_spacing - sentence_height - 0.265 * line_spacing,
+        )
+        canvas.drawString(width - 2 * margin + 6, current_height, "P")
+        canvas.drawString(width - 1.5 * margin + 6, current_height, "F")
+        for line in lines:
+            canvas.drawString(margin + 2, current_height, line)
+            current_height -= line_spacing
+        return current_height - 0.265 * line_spacing
+
+    def end_table(
+        self, canvas: canvas, width: float, current_height: float, margin: float
+    ) -> None:
+        line_spacing: float = self.font_size * 1.2
+        canvas.line(
+            margin,
+            current_height + line_spacing,
+            width - margin,
+            current_height + line_spacing,
+        )
 
 
 class Connections(Exam_Element):
@@ -611,6 +690,7 @@ class Exam_Part:
         )
         timeline_height: float = 0
         answers_height: float = 0
+        tf_table_height: float = 0
         orientation: int = 0
         rows_heights: list[float] = []
         has_answers: bool = any(type(element) is Answer for element in self.block)
@@ -621,6 +701,13 @@ class Exam_Part:
         has_timeline: bool = any(type(element) is Timeline for element in self.block)
         if has_timeline:
             timeline_height = Timeline.get_height(self.width, self.margin)
+        has_tf_table: bool = any(
+            type(element) is True_False_Table for element in self.block
+        )
+        if has_tf_table:
+            tf_table_height = True_False_Table.get_height(
+                self.width, self.margin, self.font, self.block
+            )
         block_height: float = (
             question_height + answers_height + timeline_height + (0.2 * cm)
         )
@@ -643,9 +730,13 @@ class Exam_Part:
         self.current_height -= 0.2 * cm
         current_horizontal_answer_number: int = 0
         all_answers_count: int = 0
+        all_table_elements_count: int = 0
         for exam_element in self.block:
             if type(exam_element) is Answer:
                 all_answers_count += 1
+            elif type(exam_element) is True_False_Table:
+                all_table_elements_count += 1
+        added_table_elements_count: int = 0
         for exam_element in self.block:
             if type(exam_element) is Answer:
                 if orientation == 1:
@@ -722,4 +813,20 @@ class Exam_Part:
                     self.font,
                     self.margin,
                 )
+            elif type(exam_element) is True_False_Table:
+                if added_table_elements_count == 0:
+                    self.current_height -= 0.2 * cm
+                self.current_height = exam_element.add_to_pdf(
+                    self.canvas,
+                    self.height,
+                    self.width,
+                    self.current_height,
+                    self.font,
+                    self.margin,
+                )
+                added_table_elements_count += 1
+                if added_table_elements_count == all_table_elements_count:
+                    exam_element.end_table(
+                        self.canvas, self.width, self.current_height, self.margin
+                    )
         return self.current_height

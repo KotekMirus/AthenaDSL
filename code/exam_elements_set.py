@@ -22,7 +22,7 @@ exam_elements_dictionary = {
     "oś_czasu": Timeline,
     "pole": Box,
     "wykres_kołowy": Pie_Chart,
-    "prawda_fałsz": True_False_Table,
+    "tabela_pf": True_False_Table,
     "połączenia": Connections,
     "podpisy": Label_Pictures,
     "luki": Gaps_To_Fill,
