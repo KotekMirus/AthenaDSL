@@ -27,6 +27,19 @@ def split_text_to_lines(
     return lines
 
 
+def create_new_page(
+    canvas: canvas, height: float, width: float, margin: float, font: str
+) -> float:
+    canvas.showPage()
+    canvas.setFillColorRGB(1, 1, 1)
+    canvas.rect(0, 0, width, height, fill=1, stroke=0)
+    canvas.setFillColorRGB(0, 0, 0)
+    if font:
+        canvas.setFont(font, 12)
+    current_height = height - margin
+    return current_height
+
+
 class Exam_Element:
     pass
 
@@ -51,12 +64,7 @@ class Title(Exam_Element):
         )
         title_height: float = len(lines) * line_spacing
         if current_height - title_height < margin:
-            canvas.showPage()
-            canvas.setFillColorRGB(1, 1, 1)
-            canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
-            canvas.setFillColorRGB(0, 0, 0)
-            canvas.setFont(font, self.font_size)
-            current_height = height - margin
+            current_height = create_new_page(canvas, height, width, margin, font)
         canvas.setFont(font, self.font_size)
         for line in lines:
             canvas.drawString(margin, current_height, line)
@@ -97,12 +105,7 @@ class Question(Exam_Element):
         )
         question_height: float = len(lines) * line_spacing
         if current_height - question_height < margin:
-            canvas.showPage()
-            canvas.setFillColorRGB(1, 1, 1)
-            canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
-            canvas.setFillColorRGB(0, 0, 0)
-            canvas.setFont(font, self.font_size)
-            current_height = height - margin
+            current_height = create_new_page(canvas, height, width, margin, font)
         canvas.setFont(font, self.font_size)
         for line in lines:
             canvas.drawString(margin, current_height, line)
@@ -138,7 +141,9 @@ class Answer(Exam_Element):
                     exam_element.words.pop(1)
             else:
                 exam_element = None
-        answers_list: list[Answer] = [item for item in block_copy if item is not None]
+        answers_list: list[Answer] = [
+            item for item in block_copy if type(item) is Answer
+        ]
         if orientation == 0:
             # lines_between_answers: float = (len(answers_list) - 1) * 1 * cm
             semi_final_height: float = 0
@@ -209,12 +214,7 @@ class Answer(Exam_Element):
         )
         answer_height: float = len(lines) * line_spacing
         if current_height - answer_height < margin:
-            canvas.showPage()
-            canvas.setFillColorRGB(1, 1, 1)
-            canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
-            canvas.setFillColorRGB(0, 0, 0)
-            canvas.setFont(font, self.font_size)
-            current_height = height - margin
+            current_height = create_new_page(canvas, height, width, margin, font)
         canvas.setFont(font, self.font_size)
         for line in lines:
             canvas.drawString(margin, current_height, line)
@@ -290,12 +290,7 @@ class Timeline(Exam_Element):
         margin: float,
     ) -> float:
         if current_height - Timeline.get_height(width, margin) < margin:
-            canvas.showPage()
-            canvas.setFillColorRGB(1, 1, 1)
-            canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
-            canvas.setFillColorRGB(0, 0, 0)
-            canvas.setFont(self.font, self.font_size)
-            current_height = height - margin
+            current_height = create_new_page(canvas, height, width, margin, None)
         current_height -= 0.45 * cm
         rect_width: float = (width - 2 * margin) * 0.9
         rect_height: float = rect_width * 0.055
@@ -378,11 +373,7 @@ class Box(Exam_Element):
     ) -> float:
         box_height: float = self.get_height()
         if current_height - box_height < margin:
-            canvas.showPage()
-            canvas.setFillColorRGB(1, 1, 1)
-            canvas.rect(0, 0, width, height, fill=1, stroke=0)
-            canvas.setFillColorRGB(0, 0, 0)
-            current_height = height - margin
+            current_height = create_new_page(canvas, height, width, margin, None)
         if self.type == "lines":
             canvas.setLineWidth(0.4)
             current_height -= 0.5 * self.gap_between_lines
@@ -447,6 +438,10 @@ class Pie_Chart(Exam_Element):
                         label = argument
         self.labels.append(label)
 
+    @staticmethod
+    def get_height(width: float) -> float:
+        return int(0.27 * width)
+
     def add_to_pdf(
         self,
         canvas: canvas,
@@ -458,11 +453,7 @@ class Pie_Chart(Exam_Element):
     ) -> float:
         drawing_side_length: int = int(0.27 * width)
         if current_height - drawing_side_length < margin:
-            canvas.showPage()
-            canvas.setFillColorRGB(1, 1, 1)
-            canvas.rect(0, 0, width, height, fill=1, stroke=0)
-            canvas.setFillColorRGB(0, 0, 0)
-            current_height = height - margin
+            current_height = create_new_page(canvas, height, width, margin, font)
         drawing: Drawing = Drawing(drawing_side_length, drawing_side_length)
         pie_chart: Pie = Pie()
         pie_chart.x = 0
@@ -483,7 +474,8 @@ class Pie_Chart(Exam_Element):
             width / 2 - drawing_side_length / 2,
             current_height - drawing_side_length,
         )
-        return current_height - drawing_side_length
+        line_spacing: float = 12 * 1.2
+        return current_height - drawing_side_length - line_spacing
 
 
 class True_False_Table(Exam_Element):
@@ -500,7 +492,7 @@ class True_False_Table(Exam_Element):
             if type(exam_element) is not True_False_Table:
                 exam_element = None
         table_elements_list: list[True_False_Table] = [
-            item for item in block_copy if item is not None
+            item for item in block_copy if type(item) is True_False_Table
         ]
         line_spacing: float = table_elements_list[0].font_size * 1.2
         table_height: float = 0
@@ -527,11 +519,7 @@ class True_False_Table(Exam_Element):
         )
         sentence_height: float = len(lines) * line_spacing
         if current_height - sentence_height - 0.265 * line_spacing < margin:
-            canvas.showPage()
-            canvas.setFillColorRGB(1, 1, 1)
-            canvas.rect(0, 0, width, height, fill=1, stroke=0)
-            canvas.setFillColorRGB(0, 0, 0)
-            current_height = height - margin
+            current_height = create_new_page(canvas, height, width, margin, font)
         canvas.line(
             margin,
             current_height + line_spacing,
@@ -688,8 +676,21 @@ class Exam_Part:
         question_height: float = question.get_height(
             self.width, self.font, self.margin, self.current_question_number
         )
+        exam_element_type_list: list[Exam_Element] = [
+            Answer,
+            Timeline,
+            Box,
+            Pie_Chart,
+            True_False_Table,
+            None,
+        ]
+        exam_elements_heights: dict[Exam_Element:float] = {
+            type_name: 0 for type_name in exam_element_type_list
+        }
         timeline_height: float = 0
         answers_height: float = 0
+        box_height: float = 0
+        pie_chart_height: float = 0
         tf_table_height: float = 0
         orientation: int = 0
         rows_heights: list[float] = []
@@ -698,9 +699,24 @@ class Exam_Part:
             answers_height, orientation, rows_heights = Answer.get_all_answers_height(
                 self.width, self.font, self.margin, self.chunk_size, self.block
             )
+            exam_elements_heights[Answer] = answers_height
         has_timeline: bool = any(type(element) is Timeline for element in self.block)
         if has_timeline:
             timeline_height = Timeline.get_height(self.width, self.margin)
+            exam_elements_heights[Timeline] = timeline_height
+        has_box: bool = any(type(element) is Box for element in self.block)
+        if has_box:
+            found_box_element: Exam_Element = None
+            for exam_element in self.block:
+                if type(exam_element) is Box:
+                    found_box_element = exam_element
+                    break
+            box_height = found_box_element.get_height()
+            exam_elements_heights[Box] = box_height
+        has_pie_chart: bool = any(type(element) is Pie_Chart for element in self.block)
+        if has_pie_chart:
+            pie_chart_height = Pie_Chart.get_height(self.width)
+            exam_elements_heights[Pie_Chart] = pie_chart_height
         has_tf_table: bool = any(
             type(element) is True_False_Table for element in self.block
         )
@@ -708,16 +724,21 @@ class Exam_Part:
             tf_table_height = True_False_Table.get_height(
                 self.width, self.margin, self.font, self.block
             )
+            exam_elements_heights[True_False_Table] = tf_table_height
+        first_exam_element_type: Exam_Element = None
+        for exam_element in self.block:
+            if exam_element:
+                first_exam_element_type = type(exam_element)
+                break
         block_height: float = (
-            question_height + answers_height + timeline_height + (0.2 * cm)
+            question_height
+            + exam_elements_heights[first_exam_element_type]
+            + (0.2 * cm)
         )
         if self.current_height - block_height < self.margin:
-            self.canvas.showPage()
-            self.canvas.setFillColorRGB(1, 1, 1)
-            self.canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
-            self.canvas.setFillColorRGB(0, 0, 0)
-            self.canvas.setFont(self.font, 12)
-            self.current_height = self.height - self.margin
+            self.current_height = create_new_page(
+                self.canvas, self.height, self.width, self.margin, self.font
+            )
         self.current_height = question.add_to_pdf(
             self.canvas,
             self.height,
@@ -737,8 +758,16 @@ class Exam_Part:
             elif type(exam_element) is True_False_Table:
                 all_table_elements_count += 1
         added_table_elements_count: int = 0
+        first_answer_appearance: bool = True
+        first_tf_table_appearance: bool = True
         for exam_element in self.block:
             if type(exam_element) is Answer:
+                if first_answer_appearance:
+                    if self.current_height - answers_height < self.margin:
+                        self.current_height = create_new_page(
+                            self.canvas, self.height, self.width, self.margin, self.font
+                        )
+                    first_answer_appearance = False
                 if orientation == 1:
                     if current_horizontal_answer_number % self.chunk_size == 0:
                         if (
@@ -814,6 +843,12 @@ class Exam_Part:
                     self.margin,
                 )
             elif type(exam_element) is True_False_Table:
+                if first_tf_table_appearance:
+                    if self.current_height - tf_table_height < self.margin:
+                        self.current_height = create_new_page(
+                            self.canvas, self.height, self.width, self.margin, self.font
+                        )
+                    first_tf_table_appearance = False
                 if added_table_elements_count == 0:
                     self.current_height -= 0.2 * cm
                 self.current_height = exam_element.add_to_pdf(
