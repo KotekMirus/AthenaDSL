@@ -23,9 +23,9 @@ exam_elements_dictionary = {
     "pole": Box,
     "wykres_kołowy": Pie_Chart,
     "tabela_pf": True_False_Table,
+    "luki": Gaps_To_Fill,
     "połączenia": Connections,
     "podpisy": Label_Pictures,
-    "luki": Gaps_To_Fill,
     "ponumeruj": Number_Things,
     "konfiguracja": Configuration,
 }
@@ -36,4 +36,7 @@ options_dictionary = {
     "linie": "lines",
     "kratka": "grid",
     "puste": "empty",
+    "treść": "content",
+    "opcje": "options",
+    "numeracja": "numeration",
 }

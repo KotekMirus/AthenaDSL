@@ -569,6 +569,58 @@ class True_False_Table(Exam_Element):
         )
 
 
+class Gaps_To_Fill(Exam_Element):
+    def __init__(self, arguments: list[str]):
+        self.has_numbers: bool = False
+        self.type: str = "content"
+        self.words: list[str] = copy.deepcopy(arguments)
+        from exam_elements_set import options_dictionary
+
+        for argument in arguments[:2]:
+            if argument in options_dictionary:
+                if options_dictionary[argument] == "content":
+                    self.type = "content"
+                    self.words.remove(argument)
+                elif options_dictionary[argument] == "options":
+                    self.type = "options"
+                    self.words.remove(argument)
+                elif options_dictionary[argument] == "numeration":
+                    self.has_numbers = True
+                    self.words.remove(argument)
+        if self.type == "content":
+            for i, word in enumerate(self.words):
+                if word.startswith("_") and len(word) < 3:
+                    punctuation_mark: str = ""
+                    if word[-1] in [".", ",", ";", "?", "!"]:
+                        punctuation_mark = word[1]
+                    self.words[i] = 6 * "_" + punctuation_mark
+
+        if self.type == "options":
+            groups: list[list[str]] = []
+            current: list[str] = []
+            for word in self.words:
+                if word == "#":
+                    if current:
+                        groups.append(current)
+                        current = []
+                else:
+                    current.append(word)
+            if current:
+                groups.append(current)
+            self.words = groups
+
+    def add_to_pdf(
+        self,
+        canvas: canvas,
+        height: float,
+        width: float,
+        current_height: float,
+        font: str,
+        margin: float,
+    ) -> float:
+        pass
+
+
 class Connections(Exam_Element):
     def __init__(self, arguments: list[str]):
         pass
@@ -586,22 +638,6 @@ class Connections(Exam_Element):
 
 
 class Label_Pictures(Exam_Element):
-    def __init__(self, arguments: list[str]):
-        pass
-
-    def add_to_pdf(
-        self,
-        canvas: canvas,
-        height: float,
-        width: float,
-        current_height: float,
-        font: str,
-        margin: float,
-    ) -> float:
-        pass
-
-
-class Gaps_To_Fill(Exam_Element):
     def __init__(self, arguments: list[str]):
         pass
 
