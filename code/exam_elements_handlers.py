@@ -498,7 +498,7 @@ class True_False_Table(Exam_Element):
         table_height: float = 0
         for table_element in table_elements_list:
             lines: list[str] = split_text_to_lines(
-                table_element.words, width - 5 * margin, font, table_element.font_size
+                table_element.words, width - 3 * margin, font, table_element.font_size
             )
             sentence_height: float = len(lines) * line_spacing
             table_height += sentence_height + 0.265 * line_spacing
@@ -513,9 +513,10 @@ class True_False_Table(Exam_Element):
         font: str,
         margin: float,
     ) -> float:
+        canvas.setFont(font, self.font_size)
         line_spacing: float = self.font_size * 1.2
         lines: list[str] = split_text_to_lines(
-            self.words, width - 5 * margin, font, self.font_size
+            self.words, width - 3 * margin, font, self.font_size
         )
         sentence_height: float = len(lines) * line_spacing
         if current_height - sentence_height - 0.265 * line_spacing < margin:
@@ -574,6 +575,8 @@ class Gaps_To_Fill(Exam_Element):
         self.has_numbers: bool = False
         self.type: str = "content"
         self.words: list[str] = copy.deepcopy(arguments)
+        self.font_size_content = 12
+        self.font_size_options = 10
         from exam_elements_set import options_dictionary
 
         for argument in arguments[:2]:
@@ -588,26 +591,68 @@ class Gaps_To_Fill(Exam_Element):
                     self.has_numbers = True
                     self.words.remove(argument)
         if self.type == "content":
+            gap_count: int = 1
             for i, word in enumerate(self.words):
                 if word.startswith("_") and len(word) < 3:
                     punctuation_mark: str = ""
+                    gap_number: str = ""
                     if word[-1] in [".", ",", ";", "?", "!"]:
                         punctuation_mark = word[1]
-                    self.words[i] = 6 * "_" + punctuation_mark
+                    if self.has_numbers:
+                        gap_number = str(gap_count)
+                    self.words[i] = gap_number + 6 * "_" + punctuation_mark
+                    gap_count += 1
 
         if self.type == "options":
-            groups: list[list[str]] = []
-            current: list[str] = []
-            for word in self.words:
-                if word == "#":
-                    if current:
-                        groups.append(current)
-                        current = []
-                else:
-                    current.append(word)
-            if current:
-                groups.append(current)
-            self.words = groups
+            if "#" in self.words:
+                groups: list[list[str]] = []
+                current: list[str] = []
+                for word in self.words:
+                    if word == "#":
+                        if current:
+                            groups.append(current)
+                            current = []
+                    else:
+                        current.append(word)
+                if current:
+                    groups.append(current)
+                self.words = groups
+
+    @staticmethod
+    def get_height(
+        width: float, margin: float, font: str, block: list[Exam_Element]
+    ) -> float:
+        block_copy: list[Exam_Element] = copy.deepcopy(block)
+        gaps_to_fill_height: float = 0
+        gaps_elements_count: int = 0
+        for exam_element in block_copy:
+            if type(exam_element) is Gaps_To_Fill:
+                if exam_element.type == "content":
+                    line_spacing: float = exam_element.font_size_content * 1.2
+                    lines: list[str] = split_text_to_lines(
+                        exam_element.words,
+                        width - 2 * margin,
+                        font,
+                        exam_element.font_size_content,
+                    )
+                    gaps_to_fill_height += len(lines) * line_spacing
+                elif exam_element.type == "options":
+                    if exam_element.has_numbers:
+                        line_spacing: float = exam_element.font_size_options * 2
+                        gaps_to_fill_height += len(exam_element.words) * line_spacing
+                    else:
+                        line_spacing: float = exam_element.font_size_options * 2
+                        lines: list[str] = split_text_to_lines(
+                            exam_element.words,
+                            width - 2 * margin,
+                            font,
+                            exam_element.font_size_content,
+                        )
+                        gaps_to_fill_height += len(lines) * line_spacing
+                gaps_elements_count += 1
+        line_spacing: float = 10 * 1
+        gaps_to_fill_height += (gaps_elements_count - 1) * line_spacing
+        return gaps_to_fill_height
 
     def add_to_pdf(
         self,
@@ -617,8 +662,42 @@ class Gaps_To_Fill(Exam_Element):
         current_height: float,
         font: str,
         margin: float,
+        total_gaps_height: float,
+        is_first_exercise_part: bool,
     ) -> float:
-        pass
+        if is_first_exercise_part:
+            if current_height - total_gaps_height < margin:
+                current_height = create_new_page(canvas, height, width, margin, font)
+        if self.type == "content":
+            canvas.setFont(font, self.font_size_content)
+            line_spacing: float = self.font_size_content * 1.2
+            lines: list[str] = split_text_to_lines(
+                self.words, width - 2 * margin, font, self.font_size_content
+            )
+            for line in lines:
+                canvas.drawString(margin, current_height, line)
+                current_height -= line_spacing
+        elif self.type == "options":
+            canvas.setFont(font, self.font_size_options)
+            line_spacing: float = self.font_size_options * 2
+            if self.has_numbers:
+                for i, line_list in enumerate(self.words):
+                    line: str = str(i + 1)
+                    for word in line_list:
+                        line += 5 * " " + word
+                    canvas.drawString(margin, current_height, line)
+                    current_height -= line_spacing
+            else:
+                lines: list[str] = split_text_to_lines(
+                    self.words, width - 2 * margin, font, self.font_size_options
+                )
+                for line in lines:
+                    canvas.drawString(margin, current_height, line)
+                    current_height -= line_spacing
+        if is_first_exercise_part:
+            line_spacing: float = 10 * 1
+            current_height -= line_spacing
+        return current_height
 
 
 class Connections(Exam_Element):
@@ -728,6 +807,7 @@ class Exam_Part:
         box_height: float = 0
         pie_chart_height: float = 0
         tf_table_height: float = 0
+        gaps_to_fill_height: float = 0
         orientation: int = 0
         rows_heights: list[float] = []
         has_answers: bool = any(type(element) is Answer for element in self.block)
@@ -761,6 +841,14 @@ class Exam_Part:
                 self.width, self.margin, self.font, self.block
             )
             exam_elements_heights[True_False_Table] = tf_table_height
+        has_gaps_to_fill: bool = any(
+            type(element) is Gaps_To_Fill for element in self.block
+        )
+        if has_gaps_to_fill:
+            gaps_to_fill_height = Gaps_To_Fill.get_height(
+                self.width, self.margin, self.font, self.block
+            )
+            exam_elements_heights[Gaps_To_Fill] = gaps_to_fill_height
         first_exam_element_type: Exam_Element = None
         for exam_element in self.block:
             if exam_element:
@@ -796,6 +884,7 @@ class Exam_Part:
         added_table_elements_count: int = 0
         first_answer_appearance: bool = True
         first_tf_table_appearance: bool = True
+        first_gaps_to_fill_appearance: bool = True
         for exam_element in self.block:
             if type(exam_element) is Answer:
                 if first_answer_appearance:
@@ -900,4 +989,16 @@ class Exam_Part:
                     exam_element.end_table(
                         self.canvas, self.width, self.current_height, self.margin
                     )
+            elif type(exam_element) is Gaps_To_Fill:
+                self.current_height = exam_element.add_to_pdf(
+                    self.canvas,
+                    self.height,
+                    self.width,
+                    self.current_height,
+                    self.font,
+                    self.margin,
+                    gaps_to_fill_height,
+                    first_gaps_to_fill_appearance,
+                )
+                first_gaps_to_fill_appearance = False
         return self.current_height
