@@ -692,7 +692,7 @@ class Gaps_To_Fill(Exam_Element):
                     self.words, width - 2 * margin, font, self.font_size_options
                 )
                 for line in lines:
-                    canvas.drawString(margin, current_height, line)
+                    canvas.drawCentredString(width / 2, current_height, line)
                     current_height -= line_spacing
         if is_first_exercise_part:
             line_spacing: float = 10 * 1
@@ -716,9 +716,18 @@ class Connections(Exam_Element):
         pass
 
 
-class Label_Pictures(Exam_Element):
+class Text(Exam_Element):
     def __init__(self, arguments: list[str]):
-        pass
+        self.words: list[str] = arguments
+        self.font_size: int = 12
+
+    def get_height(self, width, margin, font) -> float:
+        line_spacing: float = self.font_size * 1.2
+        lines: list[str] = split_text_to_lines(
+            self.words, width - 2 * margin, font, self.font_size
+        )
+        text_height: float = len(lines) * line_spacing
+        return text_height
 
     def add_to_pdf(
         self,
@@ -729,23 +738,17 @@ class Label_Pictures(Exam_Element):
         font: str,
         margin: float,
     ) -> float:
-        pass
-
-
-class Number_Things(Exam_Element):
-    def __init__(self, arguments: list[str]):
-        pass
-
-    def add_to_pdf(
-        self,
-        canvas: canvas,
-        height: float,
-        width: float,
-        current_height: float,
-        font: str,
-        margin: float,
-    ) -> float:
-        pass
+        if current_height - self.get_height(width, margin, font) < margin:
+            current_height = create_new_page(canvas, height, width, margin, font)
+        canvas.setFont(font, self.font_size)
+        line_spacing: float = self.font_size * 1.2
+        lines: list[str] = split_text_to_lines(
+            self.words, width - 2 * margin, font, self.font_size
+        )
+        for line in lines:
+            canvas.drawString(margin, current_height, line)
+            current_height -= line_spacing
+        return current_height
 
 
 class Configuration(Exam_Element):
@@ -797,6 +800,8 @@ class Exam_Part:
             Box,
             Pie_Chart,
             True_False_Table,
+            Gaps_To_Fill,
+            Text,
             None,
         ]
         exam_elements_heights: dict[Exam_Element:float] = {
@@ -808,6 +813,7 @@ class Exam_Part:
         pie_chart_height: float = 0
         tf_table_height: float = 0
         gaps_to_fill_height: float = 0
+        text_height: float = 0
         orientation: int = 0
         rows_heights: list[float] = []
         has_answers: bool = any(type(element) is Answer for element in self.block)
@@ -849,6 +855,17 @@ class Exam_Part:
                 self.width, self.margin, self.font, self.block
             )
             exam_elements_heights[Gaps_To_Fill] = gaps_to_fill_height
+        has_text: bool = any(type(element) is Text for element in self.block)
+        if has_text:
+            found_text_element: Exam_Element = None
+            for exam_element in self.block:
+                if type(exam_element) is Text:
+                    found_text_element = exam_element
+                    break
+            text_height = found_text_element.get_height(
+                self.width, self.margin, self.font
+            )
+            exam_elements_heights[Text] = text_height
         first_exam_element_type: Exam_Element = None
         for exam_element in self.block:
             if exam_element:
@@ -1001,4 +1018,13 @@ class Exam_Part:
                     first_gaps_to_fill_appearance,
                 )
                 first_gaps_to_fill_appearance = False
+            elif type(exam_element) is Text:
+                self.current_height = exam_element.add_to_pdf(
+                    self.canvas,
+                    self.height,
+                    self.width,
+                    self.current_height,
+                    self.font,
+                    self.margin,
+                )
         return self.current_height

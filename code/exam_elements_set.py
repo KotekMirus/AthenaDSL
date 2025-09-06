@@ -7,9 +7,8 @@ from exam_elements_handlers import (
     Pie_Chart,
     True_False_Table,
     Connections,
-    Label_Pictures,
     Gaps_To_Fill,
-    Number_Things,
+    Text,
     Configuration,
 )
 
@@ -25,8 +24,7 @@ exam_elements_dictionary = {
     "tabela_pf": True_False_Table,
     "luki": Gaps_To_Fill,
     "połączenia": Connections,
-    "podpisy": Label_Pictures,
-    "ponumeruj": Number_Things,
+    "tekst": Text,
     "konfiguracja": Configuration,
 }
 
