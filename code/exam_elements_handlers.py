@@ -125,7 +125,7 @@ class Answer(Exam_Element):
         margin: float,
         chunk_size: int,
         block: list[Exam_Element],
-    ) -> float:
+    ) -> tuple[float, int, list[float]]:
         block_copy: list[Exam_Element] = copy.deepcopy(block)
         orientation: int = 0
         answers_count: int = 0
@@ -702,18 +702,95 @@ class Gaps_To_Fill(Exam_Element):
 
 class Connections(Exam_Element):
     def __init__(self, arguments: list[str]):
-        pass
+        self.font_size: int = 12
+        self.column_number: int = 0
+        if arguments[0].isnumeric():
+            self.column_number = int(arguments.pop(0))
+        self.words: list[str] = arguments
+
+    @staticmethod
+    def get_height(
+        width: float, margin: float, font: str, block: list[Exam_Element]
+    ) -> tuple[float, dict[int : list[float]], int]:
+        block_copy: list[Exam_Element] = copy.deepcopy(block)
+        column_elements_heights: dict[int : list[float]] = {1: [], 2: []}
+        connections_count: int = 0
+        for exam_element in block_copy:
+            if type(exam_element) is Connections:
+                connections_count += 1
+                line_spacing: float = exam_element.font_size * 1.2
+                lines: list[str] = split_text_to_lines(
+                    exam_element.words,
+                    width / 2 - 2 * margin,
+                    font,
+                    exam_element.font_size,
+                )
+                column_elements_heights[exam_element.column_number].append(
+                    len(lines) * line_spacing
+                )
+        final_height: float = 0
+        min_elements_per_column: int = min(
+            len(column_elements_heights[1]), len(column_elements_heights[2])
+        )
+        for i in range(min_elements_per_column):
+            final_height += max(
+                column_elements_heights[1][i], column_elements_heights[2][i]
+            )
+        column_1_size: int = len(column_elements_heights[1])
+        column_2_size: int = len(column_elements_heights[2])
+        if column_1_size > column_2_size:
+            remaining_elements_count: int = column_1_size - column_2_size
+            for i in range(remaining_elements_count):
+                final_height += column_elements_heights[1][i + min_elements_per_column]
+        elif column_2_size > column_1_size:
+            remaining_elements_count: int = column_2_size - column_1_size
+            for i in range(remaining_elements_count):
+                final_height += column_elements_heights[2][i + min_elements_per_column]
+        return final_height, column_elements_heights, connections_count
 
     def add_to_pdf(
         self,
         canvas: canvas,
         height: float,
         width: float,
-        current_height: float,
+        exercise_starting_height: float,
         font: str,
         margin: float,
-    ) -> float:
-        pass
+        column_elements_heights: dict[int : list[float]],
+        element_row_number: int,
+    ) -> None:
+        line_spacing: float = self.font_size * 1.2
+        lines: list[str] = split_text_to_lines(
+            self.words, width / 2 - 2 * margin, font, self.font_size
+        )
+        canvas.setFont(font, self.font_size)
+        column_left_side_position: float = margin
+        if self.column_number == 2:
+            column_left_side_position: float = width / 2 + margin
+        current_height: float = exercise_starting_height
+        column_1_size: int = len(column_elements_heights[1])
+        column_2_size: int = len(column_elements_heights[2])
+        min_elements_per_column: int = min(column_1_size, column_2_size)
+        loop_range: int = min(element_row_number, min_elements_per_column - 1)
+        for i in range(loop_range):
+            current_height -= max(
+                column_elements_heights[1][i],
+                column_elements_heights[2][i],
+            )
+        if element_row_number > min_elements_per_column - 1:
+            remaining_elements_count: int = element_row_number - loop_range
+            longer_column_number: int = 1
+            if column_1_size > column_2_size:
+                longer_column_number: int = 1
+            elif column_2_size > column_1_size:
+                longer_column_number: int = 2
+            for i in range(remaining_elements_count):
+                current_height -= column_elements_heights[longer_column_number][
+                    i + loop_range
+                ]
+        for line in lines:
+            canvas.drawString(column_left_side_position, current_height, line)
+            current_height -= line_spacing
 
 
 class Text(Exam_Element):
@@ -814,6 +891,7 @@ class Exam_Part:
         tf_table_height: float = 0
         gaps_to_fill_height: float = 0
         text_height: float = 0
+        connections_height: float = 0
         orientation: int = 0
         rows_heights: list[float] = []
         has_answers: bool = any(type(element) is Answer for element in self.block)
@@ -866,6 +944,16 @@ class Exam_Part:
                 self.width, self.margin, self.font
             )
             exam_elements_heights[Text] = text_height
+        all_connections_count: int = 0
+        column_elements_heights: dict[int : list[float]] = {}
+        has_connections: bool = any(
+            type(element) is Connections for element in self.block
+        )
+        if has_connections:
+            connections_height, column_elements_heights, all_connections_count = (
+                Connections.get_height(self.width, self.margin, self.font, self.block)
+            )
+            exam_elements_heights[Connections] = connections_height
         first_exam_element_type: Exam_Element = None
         for exam_element in self.block:
             if exam_element:
@@ -902,6 +990,8 @@ class Exam_Part:
         first_answer_appearance: bool = True
         first_tf_table_appearance: bool = True
         first_gaps_to_fill_appearance: bool = True
+        column_1_connections_count: int = 0
+        column_2_connections_count: int = 0
         for exam_element in self.block:
             if type(exam_element) is Answer:
                 if first_answer_appearance:
@@ -1027,4 +1117,34 @@ class Exam_Part:
                     self.font,
                     self.margin,
                 )
+            elif type(exam_element) is Connections:
+                if column_1_connections_count + column_2_connections_count == 0:
+                    if self.current_height - connections_height < self.margin:
+                        create_new_page(
+                            self.canvas, self.height, self.width, self.margin, self.font
+                        )
+                element_row_number: int = 0
+                if exam_element.column_number == 1:
+                    element_row_number = column_1_connections_count
+                elif exam_element.column_number == 2:
+                    element_row_number = column_2_connections_count
+                exam_element.add_to_pdf(
+                    self.canvas,
+                    self.height,
+                    self.width,
+                    self.current_height,
+                    self.font,
+                    self.margin,
+                    column_elements_heights,
+                    element_row_number,
+                )
+                if exam_element.column_number == 1:
+                    column_1_connections_count += 1
+                elif exam_element.column_number == 2:
+                    column_2_connections_count += 1
+                if (
+                    column_1_connections_count + column_2_connections_count
+                    == all_connections_count
+                ):
+                    self.current_height -= connections_height
         return self.current_height
