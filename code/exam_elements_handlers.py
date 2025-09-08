@@ -716,13 +716,15 @@ class Connections(Exam_Element):
         block_copy: list[Exam_Element] = copy.deepcopy(block)
         column_elements_heights: dict[int : list[float]] = {1: [], 2: []}
         connections_count: int = 0
+        font_size: int = 0
         for exam_element in block_copy:
             if type(exam_element) is Connections:
+                font_size = exam_element.font_size
                 connections_count += 1
                 line_spacing: float = exam_element.font_size * 1.2
                 lines: list[str] = split_text_to_lines(
                     exam_element.words,
-                    width / 2 - 2 * margin,
+                    width / 2 - 2.5 * margin,
                     font,
                     exam_element.font_size,
                 )
@@ -747,6 +749,11 @@ class Connections(Exam_Element):
             remaining_elements_count: int = column_2_size - column_1_size
             for i in range(remaining_elements_count):
                 final_height += column_elements_heights[2][i + min_elements_per_column]
+        longest_column_size: int = max(
+            len(column_elements_heights[1]), len(column_elements_heights[2])
+        )
+        for _ in range(longest_column_size):
+            final_height += font_size * 0.33
         return final_height, column_elements_heights, connections_count
 
     def add_to_pdf(
@@ -762,15 +769,15 @@ class Connections(Exam_Element):
     ) -> None:
         line_spacing: float = self.font_size * 1.2
         lines: list[str] = split_text_to_lines(
-            self.words, width / 2 - 2 * margin, font, self.font_size
+            self.words, width / 2 - 2.5 * margin, font, self.font_size
         )
         canvas.setFont(font, self.font_size)
         column_left_side_position: float = margin
         if len(lines) == 1 and self.column_number == 1:
             line_width: float = pdfmetrics.stringWidth(lines[0], font, self.font_size)
-            column_left_side_position = width / 2 - margin - line_width - 2
+            column_left_side_position = width / 2 - 1.5 * margin - line_width - 2
         if self.column_number == 2:
-            column_left_side_position: float = width / 2 + margin
+            column_left_side_position: float = width / 2 + 1.5 * margin
         current_height: float = exercise_starting_height
         column_1_size: int = len(column_elements_heights[1])
         column_2_size: int = len(column_elements_heights[2])
@@ -793,10 +800,11 @@ class Connections(Exam_Element):
                     i + loop_range
                 ]
         dot_left_side_position: float = (
-            width / 2 - margin
+            width / 2 - 1.5 * margin
             if self.column_number == 1
-            else width / 2 + margin - 6 - 2
+            else width / 2 + 1.5 * margin - 6 - 2
         )
+        current_height -= self.font_size * 0.33 * element_row_number
         for i, line in enumerate(lines):
             if i == math.ceil(len(lines) / 2) - 1:
                 drawing = Drawing(6, 6)
@@ -1138,7 +1146,7 @@ class Exam_Part:
             elif type(exam_element) is Connections:
                 if column_1_connections_count + column_2_connections_count == 0:
                     if self.current_height - connections_height < self.margin:
-                        create_new_page(
+                        self.current_height = create_new_page(
                             self.canvas, self.height, self.width, self.margin, self.font
                         )
                 element_row_number: int = 0
