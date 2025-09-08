@@ -5,8 +5,9 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import cm
 from reportlab.graphics import renderPDF
 from reportlab.graphics.charts.piecharts import Pie
-from reportlab.graphics.shapes import Drawing
+from reportlab.graphics.shapes import Drawing, Circle
 from reportlab.lib import colors
+import math
 
 
 def split_text_to_lines(
@@ -765,6 +766,9 @@ class Connections(Exam_Element):
         )
         canvas.setFont(font, self.font_size)
         column_left_side_position: float = margin
+        if len(lines) == 1 and self.column_number == 1:
+            line_width: float = pdfmetrics.stringWidth(lines[0], font, self.font_size)
+            column_left_side_position = width / 2 - margin - line_width - 2
         if self.column_number == 2:
             column_left_side_position: float = width / 2 + margin
         current_height: float = exercise_starting_height
@@ -788,7 +792,21 @@ class Connections(Exam_Element):
                 current_height -= column_elements_heights[longer_column_number][
                     i + loop_range
                 ]
-        for line in lines:
+        dot_left_side_position: float = (
+            width / 2 - margin
+            if self.column_number == 1
+            else width / 2 + margin - 6 - 2
+        )
+        for i, line in enumerate(lines):
+            if i == math.ceil(len(lines) / 2) - 1:
+                drawing = Drawing(6, 6)
+                drawing.add(Circle(3, 3, 3, fillColor=colors.black, strokeWidth=0))
+                renderPDF.draw(
+                    drawing,
+                    canvas,
+                    dot_left_side_position,
+                    current_height,
+                )
             canvas.drawString(column_left_side_position, current_height, line)
             current_height -= line_spacing
 
