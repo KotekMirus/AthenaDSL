@@ -145,6 +145,8 @@ class Answer(Exam_Element):
         answers_list: list[Answer] = [
             item for item in block_copy if type(item) is Answer
         ]
+        for answer in answers_list:
+            answer.words[0] += "."
         if orientation == 0:
             # lines_between_answers: float = (len(answers_list) - 1) * 1 * cm
             semi_final_height: float = 0
