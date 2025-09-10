@@ -9,7 +9,7 @@ def extract_blocks(whole_text_tokenized: list[list[str]]) -> list[list[list[str]
     for index, line in enumerate(whole_text_tokenized):
         if not line:
             continue
-        command: str = line[0]
+        command: str = line[0].lower()
         if command in exam_elements_set.blocks_starting_keywords:
             blocks_starting_points.append(index)
     for i in range(len(blocks_starting_points)):
@@ -28,7 +28,7 @@ def detect_content_type(
 ) -> tuple[Exam_Element, str] | tuple[None, None]:
     if not tokenized_line:
         return None, None
-    command: str = tokenized_line.pop(0)
+    command: str = tokenized_line.pop(0).lower()
     class_handler: Type[Exam_Element] = exam_elements_set.exam_elements_dictionary.get(
         command
     )

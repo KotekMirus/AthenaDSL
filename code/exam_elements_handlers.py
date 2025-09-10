@@ -266,15 +266,16 @@ class Timeline(Exam_Element):
         self.font_size: int = 10
 
         for argument in arguments:
-            if argument in options_dictionary:
-                if options_dictionary[argument] == "range":
+            argument_lower: str = argument.lower()
+            if argument_lower in options_dictionary:
+                if options_dictionary[argument_lower] == "range":
                     self.range: list[int] = [
                         int(number)
                         for number in arguments[arguments.index(argument) + 1].split(
                             ","
                         )
                     ]
-                elif options_dictionary[argument] == "unit":
+                elif options_dictionary[argument_lower] == "unit":
                     self.unit: int = int(arguments[arguments.index(argument) + 1])
 
     @staticmethod
@@ -351,9 +352,10 @@ class Box(Exam_Element):
         from exam_elements_set import options_dictionary
 
         for argument in arguments:
-            if argument in options_dictionary:
-                if options_dictionary[argument] in ["lines", "grid", "empty"]:
-                    self.type: str = options_dictionary[argument]
+            argument_lower: str = argument.lower()
+            if argument_lower in options_dictionary:
+                if options_dictionary[argument_lower] in ["lines", "grid", "empty"]:
+                    self.type: str = options_dictionary[argument_lower]
                     self.size: int = int(arguments[arguments.index(argument) + 1])
 
     def get_height(self) -> float:
@@ -583,14 +585,15 @@ class Gaps_To_Fill(Exam_Element):
         from exam_elements_set import options_dictionary
 
         for argument in arguments[:2]:
-            if argument in options_dictionary:
-                if options_dictionary[argument] == "content":
+            argument_lower: str = argument.lower()
+            if argument_lower in options_dictionary:
+                if options_dictionary[argument_lower] == "content":
                     self.type = "content"
                     self.words.remove(argument)
-                elif options_dictionary[argument] == "options":
+                elif options_dictionary[argument_lower] == "options":
                     self.type = "options"
                     self.words.remove(argument)
-                elif options_dictionary[argument] == "numeration":
+                elif options_dictionary[argument_lower] == "numeration":
                     self.has_numbers = True
                     self.words.remove(argument)
         if self.type == "content":
