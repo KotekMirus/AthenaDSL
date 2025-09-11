@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.28.1/full/pyodide.js"></script>
+  <style>
+    body {
+      background-color: #212121;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+    .left-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      margin-right: 5px;
+      align-items: center;
+    }
+    .right-panel {
+      flex: 1;
+      border: 1px solid #ccc;
+      display: flex; 
+      margin-left: 5px;
+    }
+    textarea {
+      background-color: #484848;
+      color: #ffffff;
+      width: 100%;
+      height: 375px;
+      padding: 10px;
+      font-size: 14px;
+    }
+    textarea::placeholder {
+     color: #b1b1b1;  
+    }
+    button {
+      background-color: #626262;
+      color: #dfdfdf;
+      margin-top: 10px;
+      padding: 10px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      width: 150px; 
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<title>AthenaDSL</title>
+<body>
+  <div class="container">
+    <div class="left-panel">
+      <textarea id="userInput" placeholder="Tutaj wpisz kod..."></textarea>
+      <button onclick="runPython()">Wygeneruj test</button>
+    </div>
+    <div class="right-panel">
+      <iframe id="pdfFrame"></iframe>
+    </div>
+  </div>
+<script type="text/javascript">
+  let pyodide;
+  function setpdfView(base64str) {
+    let url = "data:application/pdf;base64," + base64str + "#toolbar=0&navpanes=0&view=FitH";
+    document.getElementById("pdfFrame").src = url;
+  }
+  document.setpdfView=setpdfView;
+  async function initPyodide() {
+    pyodide = await loadPyodide();
+    await pyodide.loadPackage("micropip");
+    await pyodide.runPythonAsync(`
+      import micropip
+      await micropip.install("reportlab")
+    `);
+    let pyFiles = ["main_web.py", "interpreter_generator.py", "exam_elements_handlers.py", "exam_elements_set.py", "tokenizer.py", "parser.py"];
+    for (let file of pyFiles) {
+      let response = await fetch("code/" + file);
+      let code = await response.text();
+      try { pyodide.FS.mkdir("code"); } catch (e) {}
+      pyodide.FS.writeFile("code/" + file, code);
+    }
+    let response = await fetch("fonts/arial.ttf");
+    let buffer = await response.arrayBuffer();
+    let data = new Uint8Array(buffer);
+    pyodide.FS.mkdir("fonts");
+    pyodide.FS.writeFile("fonts/arial.ttf", data);
+    await pyodide.runPythonAsync(`
+      import sys
+      sys.path.append("code")
+      import main_web
+    `);
+  }
+  async function runPython() {
+    let userValue = document.getElementById("userInput").value;
+    try {
+      await pyodide.runPythonAsync(`
+        import main_web
+        main_web.main(${JSON.stringify(userValue)})
+      `);
+    } catch (err) {
+      alert("Error: " + err);
+    }
+  }
+  initPyodide();
+</script>
+</body>
+</html>
