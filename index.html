@@ -50,10 +50,18 @@
       height: 100%;
       border: none;
     }
+    .loading-message {
+      color:white;
+      text-align: center;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <title>AthenaDSL</title>
 <body>
+  <div id="loadingMsg" class="loading-message">
+    Trwa wczytywanie Pythona... Proszę nie klikać przycisku "Wygeneruj test", dopóki ta wiadomość jest widoczna.
+  </div>
   <div class="container">
     <div class="left-panel">
       <textarea id="userInput" placeholder="Tutaj wpisz kod..."></textarea>
@@ -94,6 +102,7 @@
       sys.path.append("code")
       import main_web
     `);
+    document.getElementById("loadingMsg").style.display = "none";
   }
   async function runPython() {
     let userValue = document.getElementById("userInput").value;
