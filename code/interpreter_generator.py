@@ -1,8 +1,11 @@
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from exam_elements_handlers import Exam_Part, Exam_Element, Question, Answer
 import exam_elements_set
+from typing import Any
 
 
 class PDF_Creator:
@@ -10,10 +13,18 @@ class PDF_Creator:
         self,
         out_path: str,
         parsed_document: dict[str, list[list[Exam_Element]]],
-        font: str,
+        config_custom_values: dict[str:Any],
     ):
         self.path: str = out_path
-        self.font: str = font
+        color: tuple[int] = config_custom_values.get("color")
+        if not color:
+            color = (0, 0, 0)
+        self.color: tuple[int] = color
+        font_path: str = config_custom_values.get("font")
+        if not font_path:
+            font_path = "fonts/arial.ttf"
+        pdfmetrics.registerFont(TTFont("Font", font_path))
+        self.font: str = "Font"
         self.margin: float = 1.5 * cm
         self.parsed_document: dict[str, list[list[Exam_Element]]] = parsed_document
         self.current_question_number: int = 0
@@ -24,10 +35,15 @@ class PDF_Creator:
         self.current_height: float = self.height - self.margin
         self.canvas.setFillColorRGB(1, 1, 1)
         self.canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
-        self.canvas.setFillColorRGB(0, 0, 0)
+        self.canvas.setFillColorRGB(*self.color)
 
     def add_to_pdf(self):
         for keyword in exam_elements_set.blocks_starting_keywords:
+            if (
+                exam_elements_set.config_elements_dictionary.get(keyword)
+                == "configuration"
+            ):
+                continue
             for keyword_block in self.parsed_document[keyword]:
                 if type(keyword_block[0]) is Question:
                     self.current_question_number += 1
@@ -38,6 +54,7 @@ class PDF_Creator:
                         self.width,
                         self.current_height,
                         self.font,
+                        self.color,
                         self.margin,
                         self.current_question_number,
                     )
@@ -49,6 +66,7 @@ class PDF_Creator:
                         self.width,
                         self.current_height,
                         self.font,
+                        self.color,
                         self.margin,
                     )
                 self.current_height -= 0.8 * cm

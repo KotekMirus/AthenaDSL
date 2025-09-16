@@ -1,22 +1,22 @@
 import tokenizer as tokenizer
 import parser as parser
 import interpreter_generator as interpreter
+import config_manager as config
 from exam_elements_handlers import Exam_Element
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+from typing import Any
 import base64
 import js
 
 
 def main(user_input: str) -> None:
     whole_text_tokenized: list[list[str]] = tokenizer.segment_text(user_input)
-    parsed_document: dict[str, list[list[Exam_Element]]] = parser.parse_document(
-        whole_text_tokenized
-    )
-    font_path: str = "fonts/arial.ttf"
-    pdfmetrics.registerFont(TTFont("Arial", font_path))
+    parsed_document: dict[str, list[list[Exam_Element]]] = None
+    config_dict: dict[str : list[str]] = None
+    parsed_document, config_dict = parser.parse_document(whole_text_tokenized)
+    configuration: config.Configuration = config.Configuration(config_dict)
+    config_custom_values: dict[str:Any] = configuration.get_values()
     pdf: interpreter.PDF_Creator = interpreter.PDF_Creator(
-        "TEST.pdf", parsed_document, "Arial"
+        "TEST.pdf", parsed_document, config_custom_values
     )
     pdf.create_empty_pdf()
     pdf.add_to_pdf()

@@ -9,8 +9,8 @@ from exam_elements_handlers import (
     Connections,
     Gaps_To_Fill,
     Text,
-    Configuration,
 )
+from config_manager import Configuration
 
 blocks_starting_keywords = ["konfiguracja", "tytuł", "pytanie"]
 
@@ -25,7 +25,12 @@ exam_elements_dictionary = {
     "luki": Gaps_To_Fill,
     "połączenia": Connections,
     "tekst": Text,
-    "konfiguracja": Configuration,
+}
+
+config_elements_dictionary = {
+    "konfiguracja": "configuration",
+    "kolor": "color",
+    "czcionka": "font",
 }
 
 options_dictionary = {

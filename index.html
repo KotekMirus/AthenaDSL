@@ -94,7 +94,7 @@
       import micropip
       await micropip.install("reportlab")
     `);
-    let pyFiles = ["main_web.py", "interpreter_generator.py", "exam_elements_handlers.py", "exam_elements_set.py", "tokenizer.py", "parser.py"];
+    let pyFiles = ["main_web.py", "interpreter_generator.py", "exam_elements_handlers.py", "exam_elements_set.py", "tokenizer.py", "parser.py", "config_manager.py"];
     for (let file of pyFiles) {
       let response = await fetch("code/" + file);
       let code = await response.text();

@@ -38,13 +38,33 @@ def detect_content_type(
     return exam_element, command
 
 
+def parse_config(blocks: list[list[list[str]]]) -> tuple[str, dict[str : list[str]]]:
+    config_original_name: str = None
+    config_dict: dict[str : list[str]] = {}
+    for block in blocks:
+        if (
+            exam_elements_set.config_elements_dictionary.get(block[0][0])
+            == "configuration"
+        ):
+            config_original_name = block[0][0]
+            for line in block:
+                config_element: str = exam_elements_set.config_elements_dictionary.get(
+                    line[0]
+                )
+                if config_element:
+                    config_dict[config_element] = line[1:]
+            break
+    return config_original_name, config_dict
+
+
 def parse_document(
     whole_text_tokenized: list[list[str]],
-) -> dict[str, list[list[Exam_Element]]]:
+) -> tuple[dict[str, list[list[Exam_Element]]], dict[str : list[str]]]:
     exam_parts: dict[str, list[list[Exam_Element]]] = {
         part_name: [] for part_name in exam_elements_set.blocks_starting_keywords
     }
     blocks: list[list[list[str]]] = extract_blocks(whole_text_tokenized)
+    config_original_name, config_dict = parse_config(blocks)
     for block in blocks:
         block_type: str | None = None
         part_of_exam: list[Exam_Element] = []
@@ -55,4 +75,6 @@ def parse_document(
                 block_type = element_name
         if block_type:
             exam_parts[block_type].append(part_of_exam)
-    return exam_parts
+    if config_original_name:
+        exam_parts.pop(config_original_name)
+    return exam_parts, config_dict
