@@ -10,6 +10,7 @@ from exam_elements_handlers import (
     split_text_to_lines,
 )
 import exam_elements_set
+import random
 from typing import Any
 
 
@@ -27,13 +28,22 @@ class PDF_Creator:
         self.color: tuple[int] = color
         font_path: str = config_custom_values.get("font")
         if not font_path:
-            font_path = "fonts/arial.ttf"
+            font_path = "fonts/Nunito-Regular.ttf"
         pdfmetrics.registerFont(TTFont("Font", font_path))
         self.font: str = "Font"
         self.student_data: list[str] = None
         student_data: list[str] = config_custom_values.get("student_data")
         if student_data:
             self.student_data = student_data
+        self.rng_seed: str = config_custom_values.get("rng_seed")
+        if self.rng_seed:
+            random.seed(self.rng_seed)
+            question_block_name: str = [
+                k
+                for k, v in exam_elements_set.exam_elements_dictionary.items()
+                if v is Question
+            ][0]
+            random.shuffle(parsed_document[question_block_name])
         self.margin: float = 1.5 * cm
         self.parsed_document: dict[str, list[list[Exam_Element]]] = parsed_document
         self.current_question_number: int = 0
@@ -47,6 +57,8 @@ class PDF_Creator:
         self.canvas.setFillColorRGB(*self.color)
         if self.student_data:
             self.add_place_for_student_data_to_pdf()
+        if self.rng_seed:
+            self.add_rng_seed_to_pdf()
 
     def add_place_for_student_data_to_pdf(self):
         font_size: int = 12
@@ -75,11 +87,21 @@ class PDF_Creator:
         self.canvas.setFont(self.font, font_size)
         self.canvas.drawString(
             self.margin,
-            self.current_height + 0.25 * self.margin,
+            self.current_height + 0.2 * self.margin,
             final_student_data_line,
         )
         line_spacing: float = font_size * 1.2
         self.current_height -= line_spacing + 0.25 * self.margin
+
+    def add_rng_seed_to_pdf(self):
+        font_size: int = 10
+        line_width: float = pdfmetrics.stringWidth(self.rng_seed, self.font, font_size)
+        self.canvas.setFont(self.font, font_size)
+        self.canvas.drawString(
+            self.width - 0.5 * self.margin - line_width,
+            self.height - 0.5 * self.margin,
+            str(self.rng_seed),
+        )
 
     def add_to_pdf(self):
         for keyword in exam_elements_set.blocks_starting_keywords:

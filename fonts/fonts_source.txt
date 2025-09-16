@@ -1,0 +1,9 @@
+All fonts are from https://fonts.google.com/
+
+https://fonts.google.com/specimen/Nunito
+https://fonts.google.com/specimen/Lato
+https://fonts.google.com/specimen/EB+Garamond
+https://fonts.google.com/specimen/Roboto+Mono
+
+SIL Open Font License
+https://openfontlicense.org/open-font-license-official-text/

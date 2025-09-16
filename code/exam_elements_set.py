@@ -32,6 +32,7 @@ config_elements_dictionary = {
     "kolor": "color",
     "czcionka": "font",
     "dane_ucznia": "student_data",
+    "losowa_kolejność_pytań": "random_question_order",
 }
 
 options_dictionary = {

@@ -101,11 +101,14 @@
       try { pyodide.FS.mkdir("code"); } catch (e) {}
       pyodide.FS.writeFile("code/" + file, code);
     }
-    let response = await fetch("fonts/arial.ttf");
-    let buffer = await response.arrayBuffer();
-    let data = new Uint8Array(buffer);
+    let fontFiles = ["Nunito-Regular.ttf", "Lato-Regular.ttf", "EBGaramond-Medium.ttf", "RobotoMono-Regular.ttf"]
     pyodide.FS.mkdir("fonts");
-    pyodide.FS.writeFile("fonts/arial.ttf", data);
+    for (let file of fontFiles) {
+      let response = await fetch("fonts/" + file);
+      let buffer = await response.arrayBuffer();
+      let data = new Uint8Array(buffer);
+      pyodide.FS.writeFile("fonts/" + file, data);
+    }
     await pyodide.runPythonAsync(`
       import sys
       sys.path.append("code")
