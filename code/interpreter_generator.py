@@ -3,7 +3,12 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from exam_elements_handlers import Exam_Part, Exam_Element, Question, Answer
+from exam_elements_handlers import (
+    Exam_Part,
+    Exam_Element,
+    Question,
+    split_text_to_lines,
+)
 import exam_elements_set
 from typing import Any
 
@@ -25,6 +30,10 @@ class PDF_Creator:
             font_path = "fonts/arial.ttf"
         pdfmetrics.registerFont(TTFont("Font", font_path))
         self.font: str = "Font"
+        self.student_data: list[str] = None
+        student_data: list[str] = config_custom_values.get("student_data")
+        if student_data:
+            self.student_data = student_data
         self.margin: float = 1.5 * cm
         self.parsed_document: dict[str, list[list[Exam_Element]]] = parsed_document
         self.current_question_number: int = 0
@@ -36,6 +45,41 @@ class PDF_Creator:
         self.canvas.setFillColorRGB(1, 1, 1)
         self.canvas.rect(0, 0, self.width, self.height, fill=1, stroke=0)
         self.canvas.setFillColorRGB(*self.color)
+        if self.student_data:
+            self.add_place_for_student_data_to_pdf()
+
+    def add_place_for_student_data_to_pdf(self):
+        font_size: int = 12
+        student_data_words: list[str] = [
+            k
+            for k, v in exam_elements_set.options_dictionary.items()
+            if v in self.student_data
+        ]
+        counter: int = 0
+        final_student_data_line: str = ""
+        while True:
+            student_data_words_with_space: list[str] = []
+            for word in student_data_words:
+                student_data_words_with_space.append(word + ":" + (counter * "_"))
+            line_after_split: list[str] = split_text_to_lines(
+                student_data_words_with_space,
+                self.width - 2 * self.margin,
+                self.font,
+                font_size,
+            )
+            if len(line_after_split) > 1:
+                break
+            else:
+                final_student_data_line = line_after_split[0]
+                counter += 1
+        self.canvas.setFont(self.font, font_size)
+        self.canvas.drawString(
+            self.margin,
+            self.current_height + 0.25 * self.margin,
+            final_student_data_line,
+        )
+        line_spacing: float = font_size * 1.2
+        self.current_height -= line_spacing + 0.25 * self.margin
 
     def add_to_pdf(self):
         for keyword in exam_elements_set.blocks_starting_keywords:

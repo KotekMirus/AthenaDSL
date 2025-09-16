@@ -43,16 +43,23 @@ def parse_config(blocks: list[list[list[str]]]) -> tuple[str, dict[str : list[st
     config_dict: dict[str : list[str]] = {}
     for block in blocks:
         if (
-            exam_elements_set.config_elements_dictionary.get(block[0][0])
+            exam_elements_set.config_elements_dictionary.get(block[0][0].lower())
             == "configuration"
         ):
-            config_original_name = block[0][0]
+            config_original_name = block[0][0].lower()
             for line in block:
                 config_element: str = exam_elements_set.config_elements_dictionary.get(
-                    line[0]
+                    line[0].lower()
                 )
                 if config_element:
-                    config_dict[config_element] = line[1:]
+                    new_line: list[str] = []
+                    for word in line[1:]:
+                        detected_option = exam_elements_set.options_dictionary.get(word)
+                        if detected_option:
+                            new_line.append(detected_option)
+                        else:
+                            new_line.append(word)
+                    config_dict[config_element] = new_line
             break
     return config_original_name, config_dict
 

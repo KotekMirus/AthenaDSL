@@ -31,6 +31,7 @@ config_elements_dictionary = {
     "konfiguracja": "configuration",
     "kolor": "color",
     "czcionka": "font",
+    "dane_ucznia": "student_data",
 }
 
 options_dictionary = {
@@ -42,4 +43,9 @@ options_dictionary = {
     "treść": "content",
     "opcje": "options",
     "numeracja": "numeration",
+    "imię": "name",
+    "nazwisko": "surname",
+    "data": "date",
+    "klasa": "class",
+    "wszystkie": "all",
 }
