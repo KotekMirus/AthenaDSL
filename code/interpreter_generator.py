@@ -18,7 +18,7 @@ class PDF_Creator:
     def __init__(
         self,
         out_path: str,
-        parsed_document: dict[str, list[list[Exam_Element]]],
+        parsed_document: dict[str, list[list[list[Exam_Element, int]]]],
         config_custom_values: dict[str:Any],
     ):
         self.path: str = out_path
@@ -45,7 +45,9 @@ class PDF_Creator:
             ][0]
             random.shuffle(parsed_document[question_block_name])
         self.margin: float = 1.5 * cm
-        self.parsed_document: dict[str, list[list[Exam_Element]]] = parsed_document
+        self.parsed_document: dict[str, list[list[list[Exam_Element, int]]]] = (
+            parsed_document
+        )
         self.current_question_number: int = 0
 
     def create_empty_pdf(self):
@@ -104,17 +106,29 @@ class PDF_Creator:
         )
 
     def add_to_pdf(self):
+        line_number_dict: dict[Exam_Element:int] = {}
+        parsed_document_without_numbers: dict[str, list[list[Exam_Element]]] = {}
+        for key, outer_list in self.parsed_document.items():
+            new_outer: list[list[Exam_Element]] = []
+            for inner_list in outer_list:
+                new_inner: list[Exam_Element] = []
+                for element, number in inner_list:
+                    new_inner.append(element)
+                    line_number_dict[element] = number
+                new_outer.append(new_inner)
+            parsed_document_without_numbers[key] = new_outer
         for keyword in exam_elements_set.blocks_starting_keywords:
             if (
                 exam_elements_set.config_elements_dictionary.get(keyword)
                 == "configuration"
             ):
                 continue
-            for keyword_block in self.parsed_document[keyword]:
+            for keyword_block in parsed_document_without_numbers[keyword]:
                 if type(keyword_block[0]) is Question:
                     self.current_question_number += 1
                     exam_part = Exam_Part(
                         keyword_block,
+                        line_number_dict,
                         self.canvas,
                         self.height,
                         self.width,

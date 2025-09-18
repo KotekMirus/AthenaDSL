@@ -596,7 +596,7 @@ class True_False_Table(Exam_Element):
 class Gaps_To_Fill(Exam_Element):
     def __init__(self, arguments: list[str]):
         self.has_numbers: bool = False
-        self.type: str = "content"
+        self.type: str = ""
         self.words: list[str] = copy.deepcopy(arguments)
         self.font_size_content = 12
         self.font_size_options = 10
@@ -641,6 +641,9 @@ class Gaps_To_Fill(Exam_Element):
                 if current:
                     groups.append(current)
                 self.words = groups
+
+        if self.type == "":
+            raise Exception("unspecified type")
 
     @staticmethod
     def get_height(
@@ -888,6 +891,7 @@ class Exam_Part:
     def __init__(
         self,
         block: list[Exam_Element],
+        line_number_dict: dict[Exam_Element:int],
         canvas: canvas,
         height: float,
         width: float,
@@ -898,6 +902,7 @@ class Exam_Part:
         current_question_number: int,
     ):
         self.block = block
+        self.line_number_dict = line_number_dict
         self.canvas = canvas
         self.height = height
         self.width = width
@@ -1036,60 +1041,92 @@ class Exam_Part:
         column_1_connections_count: int = 0
         column_2_connections_count: int = 0
         for exam_element in self.block:
-            if type(exam_element) is Answer:
-                if first_answer_appearance:
-                    if self.current_height - answers_height < self.margin:
-                        self.current_height = create_new_page(
+            try:
+                if type(exam_element) is Answer:
+                    if first_answer_appearance:
+                        if self.current_height - answers_height < self.margin:
+                            self.current_height = create_new_page(
+                                self.canvas,
+                                self.height,
+                                self.width,
+                                self.margin,
+                                self.font,
+                                self.color,
+                            )
+                        first_answer_appearance = False
+                    if orientation == 1:
+                        if current_horizontal_answer_number % self.chunk_size == 0:
+                            if (
+                                self.current_height
+                                - rows_heights[
+                                    int(
+                                        current_horizontal_answer_number
+                                        / self.chunk_size
+                                    )
+                                ]
+                                < self.margin
+                            ):
+                                self.canvas.showPage()
+                                self.canvas.setFillColorRGB(1, 1, 1)
+                                self.canvas.rect(
+                                    0, 0, self.width, self.height, fill=1, stroke=0
+                                )
+                                self.canvas.setFillColorRGB(*self.color)
+                                self.canvas.setFont(self.font, 12)
+                                self.current_height = self.height - self.margin
+                        exam_element.add_to_pdf_horizontal(
                             self.canvas,
                             self.height,
                             self.width,
+                            self.current_height,
+                            self.font,
                             self.margin,
+                            self.chunk_size,
+                            current_horizontal_answer_number % self.chunk_size,
+                        )
+                        if (
+                            current_horizontal_answer_number % self.chunk_size
+                            == self.chunk_size - 1
+                            and int((current_horizontal_answer_number + 1) / 4)
+                            < len(rows_heights)
+                        ):
+                            self.current_height -= (
+                                rows_heights[int(current_horizontal_answer_number / 4)]
+                                + 0.15 * cm
+                            )
+                        current_horizontal_answer_number += 1
+                        if current_horizontal_answer_number == all_answers_count:
+                            self.current_height -= rows_heights[-1]
+                    else:
+                        self.current_height = exam_element.add_to_pdf_vertical(
+                            self.canvas,
+                            self.height,
+                            self.width,
+                            self.current_height,
                             self.font,
                             self.color,
+                            self.margin,
                         )
-                    first_answer_appearance = False
-                if orientation == 1:
-                    if current_horizontal_answer_number % self.chunk_size == 0:
-                        if (
-                            self.current_height
-                            - rows_heights[
-                                int(current_horizontal_answer_number / self.chunk_size)
-                            ]
-                            < self.margin
-                        ):
-                            self.canvas.showPage()
-                            self.canvas.setFillColorRGB(1, 1, 1)
-                            self.canvas.rect(
-                                0, 0, self.width, self.height, fill=1, stroke=0
-                            )
-                            self.canvas.setFillColorRGB(*self.color)
-                            self.canvas.setFont(self.font, 12)
-                            self.current_height = self.height - self.margin
-                    exam_element.add_to_pdf_horizontal(
+                elif type(exam_element) is Timeline:
+                    self.current_height = exam_element.add_to_pdf(
                         self.canvas,
                         self.height,
                         self.width,
                         self.current_height,
-                        self.font,
+                        self.color,
                         self.margin,
-                        self.chunk_size,
-                        current_horizontal_answer_number % self.chunk_size,
                     )
-                    if (
-                        current_horizontal_answer_number % self.chunk_size
-                        == self.chunk_size - 1
-                        and int((current_horizontal_answer_number + 1) / 4)
-                        < len(rows_heights)
-                    ):
-                        self.current_height -= (
-                            rows_heights[int(current_horizontal_answer_number / 4)]
-                            + 0.15 * cm
-                        )
-                    current_horizontal_answer_number += 1
-                    if current_horizontal_answer_number == all_answers_count:
-                        self.current_height -= rows_heights[-1]
-                else:
-                    self.current_height = exam_element.add_to_pdf_vertical(
+                elif type(exam_element) is Box:
+                    self.current_height = exam_element.add_to_pdf(
+                        self.canvas,
+                        self.height,
+                        self.width,
+                        self.current_height,
+                        self.color,
+                        self.margin,
+                    )
+                elif type(exam_element) is Pie_Chart:
+                    self.current_height = exam_element.add_to_pdf(
                         self.canvas,
                         self.height,
                         self.width,
@@ -1098,119 +1135,93 @@ class Exam_Part:
                         self.color,
                         self.margin,
                     )
-            elif type(exam_element) is Timeline:
-                self.current_height = exam_element.add_to_pdf(
-                    self.canvas,
-                    self.height,
-                    self.width,
-                    self.current_height,
-                    self.color,
-                    self.margin,
-                )
-            elif type(exam_element) is Box:
-                self.current_height = exam_element.add_to_pdf(
-                    self.canvas,
-                    self.height,
-                    self.width,
-                    self.current_height,
-                    self.color,
-                    self.margin,
-                )
-            elif type(exam_element) is Pie_Chart:
-                self.current_height = exam_element.add_to_pdf(
-                    self.canvas,
-                    self.height,
-                    self.width,
-                    self.current_height,
-                    self.font,
-                    self.color,
-                    self.margin,
-                )
-            elif type(exam_element) is True_False_Table:
-                if first_tf_table_appearance:
-                    if self.current_height - tf_table_height < self.margin:
-                        self.current_height = create_new_page(
-                            self.canvas,
-                            self.height,
-                            self.width,
-                            self.margin,
-                            self.font,
-                            self.color,
-                        )
-                    first_tf_table_appearance = False
-                if added_table_elements_count == 0:
-                    self.current_height -= 0.2 * cm
-                self.current_height = exam_element.add_to_pdf(
-                    self.canvas,
-                    self.height,
-                    self.width,
-                    self.current_height,
-                    self.font,
-                    self.color,
-                    self.margin,
-                )
-                added_table_elements_count += 1
-                if added_table_elements_count == all_table_elements_count:
-                    exam_element.end_table(
-                        self.canvas, self.width, self.current_height, self.margin
+                elif type(exam_element) is True_False_Table:
+                    if first_tf_table_appearance:
+                        if self.current_height - tf_table_height < self.margin:
+                            self.current_height = create_new_page(
+                                self.canvas,
+                                self.height,
+                                self.width,
+                                self.margin,
+                                self.font,
+                                self.color,
+                            )
+                        first_tf_table_appearance = False
+                    if added_table_elements_count == 0:
+                        self.current_height -= 0.2 * cm
+                    self.current_height = exam_element.add_to_pdf(
+                        self.canvas,
+                        self.height,
+                        self.width,
+                        self.current_height,
+                        self.font,
+                        self.color,
+                        self.margin,
                     )
-            elif type(exam_element) is Gaps_To_Fill:
-                self.current_height = exam_element.add_to_pdf(
-                    self.canvas,
-                    self.height,
-                    self.width,
-                    self.current_height,
-                    self.font,
-                    self.color,
-                    self.margin,
-                    gaps_to_fill_height,
-                    first_gaps_to_fill_appearance,
-                )
-                first_gaps_to_fill_appearance = False
-            elif type(exam_element) is Text:
-                self.current_height = exam_element.add_to_pdf(
-                    self.canvas,
-                    self.height,
-                    self.width,
-                    self.current_height,
-                    self.font,
-                    self.color,
-                    self.margin,
-                )
-            elif type(exam_element) is Connections:
-                if column_1_connections_count + column_2_connections_count == 0:
-                    if self.current_height - connections_height < self.margin:
-                        self.current_height = create_new_page(
-                            self.canvas,
-                            self.height,
-                            self.width,
-                            self.margin,
-                            self.font,
-                            self.color,
+                    added_table_elements_count += 1
+                    if added_table_elements_count == all_table_elements_count:
+                        exam_element.end_table(
+                            self.canvas, self.width, self.current_height, self.margin
                         )
-                element_row_number: int = 0
-                if exam_element.column_number == 1:
-                    element_row_number = column_1_connections_count
-                elif exam_element.column_number == 2:
-                    element_row_number = column_2_connections_count
-                exam_element.add_to_pdf(
-                    self.canvas,
-                    self.height,
-                    self.width,
-                    self.current_height,
-                    self.font,
-                    self.color,
-                    self.margin,
-                    column_elements_heights,
-                    element_row_number,
-                )
-                if exam_element.column_number == 1:
-                    column_1_connections_count += 1
-                elif exam_element.column_number == 2:
-                    column_2_connections_count += 1
-                if (
-                    column_1_connections_count + column_2_connections_count
-                    == all_connections_count
-                ):
-                    self.current_height -= connections_height
+                elif type(exam_element) is Gaps_To_Fill:
+                    self.current_height = exam_element.add_to_pdf(
+                        self.canvas,
+                        self.height,
+                        self.width,
+                        self.current_height,
+                        self.font,
+                        self.color,
+                        self.margin,
+                        gaps_to_fill_height,
+                        first_gaps_to_fill_appearance,
+                    )
+                    first_gaps_to_fill_appearance = False
+                elif type(exam_element) is Text:
+                    self.current_height = exam_element.add_to_pdf(
+                        self.canvas,
+                        self.height,
+                        self.width,
+                        self.current_height,
+                        self.font,
+                        self.color,
+                        self.margin,
+                    )
+                elif type(exam_element) is Connections:
+                    if column_1_connections_count + column_2_connections_count == 0:
+                        if self.current_height - connections_height < self.margin:
+                            self.current_height = create_new_page(
+                                self.canvas,
+                                self.height,
+                                self.width,
+                                self.margin,
+                                self.font,
+                                self.color,
+                            )
+                    element_row_number: int = 0
+                    if exam_element.column_number == 1:
+                        element_row_number = column_1_connections_count
+                    elif exam_element.column_number == 2:
+                        element_row_number = column_2_connections_count
+                    exam_element.add_to_pdf(
+                        self.canvas,
+                        self.height,
+                        self.width,
+                        self.current_height,
+                        self.font,
+                        self.color,
+                        self.margin,
+                        column_elements_heights,
+                        element_row_number,
+                    )
+                    if exam_element.column_number == 1:
+                        column_1_connections_count += 1
+                    elif exam_element.column_number == 2:
+                        column_2_connections_count += 1
+                    if (
+                        column_1_connections_count + column_2_connections_count
+                        == all_connections_count
+                    ):
+                        self.current_height -= connections_height
+            except Exception:
+                raise Exception(f"Error in line {self.line_number_dict[exam_element]}")
         return self.current_height
