@@ -10,7 +10,8 @@ from typing import IO, Any
 
 
 def main(filename: str) -> None:
-    logging.basicConfig(level=logging.ERROR, format="%(message)s")
+    logging.basicConfig(level=logging.WARNING, format="%(message)s")
+    logger = logging.getLogger(__name__)
     file_path: Path = Path(filename).resolve()
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {filename}")
@@ -20,8 +21,11 @@ def main(filename: str) -> None:
     )
     parsed_document: dict[str, list[list[list[Exam_Element, int]]]] = None
     config_dict: dict[str : list[str]] = None
+    final_bad_lines_count: int = 0
     try:
-        parsed_document, config_dict = parser.parse_document(whole_text_tokenized)
+        parsed_document, config_dict, final_bad_lines_count = parser.parse_document(
+            whole_text_tokenized
+        )
         configuration: config.Configuration = config.Configuration(config_dict)
         config_custom_values: dict[str:Any] = configuration.get_values()
         output_path: Path = file_path.with_suffix(".pdf")
@@ -31,8 +35,10 @@ def main(filename: str) -> None:
         pdf.create_empty_pdf()
         pdf.add_to_pdf()
         pdf.save_pdf()
+        if final_bad_lines_count > 0:
+            logger.warning(f"Omitted {final_bad_lines_count} line(s)")
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
 
 
 if __name__ == "__main__":

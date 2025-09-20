@@ -359,6 +359,7 @@ class Box(Exam_Element):
     def __init__(self, arguments: list[str]):
         self.gap_between_lines: float = 29
         self.square_side_size: float = 12
+        self.type = ""
         from exam_elements_set import options_dictionary
 
         for argument in arguments:
@@ -367,6 +368,8 @@ class Box(Exam_Element):
                 if options_dictionary[argument_lower] in ["lines", "grid", "empty"]:
                     self.type: str = options_dictionary[argument_lower]
                     self.size: int = int(arguments[arguments.index(argument) + 1])
+        if self.type == "":
+            raise Exception("unspecified type")
 
     def get_height(self) -> float:
         height: float = 0
@@ -737,6 +740,8 @@ class Connections(Exam_Element):
         if arguments[0].isnumeric():
             self.column_number = int(arguments.pop(0))
         self.words: list[str] = arguments
+        if self.column_number not in [1, 2]:
+            raise Exception("wrong column number")
 
     @staticmethod
     def get_height(

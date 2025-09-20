@@ -46,9 +46,11 @@ def detect_content_type(
 
 def parse_config(
     blocks: list[list[list[list[str], int]]],
-) -> tuple[str, dict[str : list[str]]]:
+) -> tuple[str, dict[str : list[str]], int, int]:
     config_original_name: str = None
     config_dict: dict[str : list[str]] = {}
+    config_lines_count: int = 0
+    config_bad_lines_count: int = 0
     for block in blocks:
         if (
             exam_elements_set.config_elements_dictionary.get(block[0][0][0].lower())
@@ -56,7 +58,10 @@ def parse_config(
         ):
             config_original_name = block[0][0][0].lower()
             for line_and_number in block:
+                config_lines_count += 1
                 line: list[str] = line_and_number[0]
+                if not line:
+                    continue
                 config_element: str = exam_elements_set.config_elements_dictionary.get(
                     line[0].lower()
                 )
@@ -69,18 +74,25 @@ def parse_config(
                         else:
                             new_line.append(word)
                     config_dict[config_element] = new_line
+                else:
+                    config_bad_lines_count += 1
             break
-    return config_original_name, config_dict
+    return config_original_name, config_dict, config_lines_count, config_bad_lines_count
 
 
 def parse_document(
     whole_text_tokenized: list[list[list[str], int]],
-) -> tuple[dict[str, list[list[list[Exam_Element, int]]]], dict[str : list[str]]]:
+) -> tuple[dict[str, list[list[list[Exam_Element, int]]]], dict[str : list[str]], int]:
     exam_parts: dict[str, list[list[Exam_Element]]] = {
         part_name: [] for part_name in exam_elements_set.blocks_starting_keywords
     }
     blocks: list[list[list[list[str], int]]] = extract_blocks(whole_text_tokenized)
-    config_original_name, config_dict = parse_config(blocks)
+    all_bad_lines_count: int = 0
+    config_lines_count: int = 0
+    config_bad_lines_count: int = 0
+    config_original_name, config_dict, config_lines_count, config_bad_lines_count = (
+        parse_config(blocks)
+    )
     for block in blocks:
         block_type: str | None = None
         part_of_exam: list[list[Exam_Element, int]] = []
@@ -88,6 +100,9 @@ def parse_document(
             line: list[str] = line_and_number[0]
             line_number: int = line_and_number[1]
             exam_element, element_name = detect_content_type(line, line_number)
+            if not exam_element:
+                if element_name:
+                    all_bad_lines_count += 1
             part_of_exam.append([exam_element, line_number])
             if element_name in exam_elements_set.blocks_starting_keywords:
                 block_type = element_name
@@ -95,4 +110,7 @@ def parse_document(
             exam_parts[block_type].append(part_of_exam)
     if config_original_name:
         exam_parts.pop(config_original_name)
-    return exam_parts, config_dict
+    final_bad_lines_count: int = (
+        all_bad_lines_count - config_lines_count + config_bad_lines_count
+    )
+    return exam_parts, config_dict, final_bad_lines_count

@@ -14,6 +14,8 @@ class Configuration:
         font_path: list[str] = config_elements.get("font")
         if font_path:
             self.font = font_path[0]
+        if font_path == []:
+            raise Exception("Error in Configuration (font)")
         color_values: list[str] = config_elements.get("color")
         if color_values:
             if (
@@ -32,6 +34,8 @@ class Configuration:
                     int(color_values[1]) / 255,
                     int(color_values[2]) / 255,
                 )
+            else:
+                raise Exception("Error in Configuration (color)")
         student_data: list[str] = config_elements.get("student_data")
         if student_data:
             self.student_data = []
