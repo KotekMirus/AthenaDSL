@@ -49,6 +49,7 @@ class PDF_Creator:
             parsed_document
         )
         self.current_question_number: int = 0
+        self.current_subquestion_number: int = 0
 
     def create_empty_pdf(self):
         self.canvas: canvas = canvas.Canvas(self.path, pagesize=A4)
@@ -125,7 +126,11 @@ class PDF_Creator:
                 continue
             for keyword_block in parsed_document_without_numbers[keyword]:
                 if type(keyword_block[0]) is Question:
-                    self.current_question_number += 1
+                    if keyword_block[0].get_type() == "standard":
+                        self.current_question_number += 1
+                        self.current_subquestion_number = 0
+                    elif keyword_block[0].get_type() == "sub":
+                        self.current_subquestion_number += 1
                     exam_part = Exam_Part(
                         keyword_block,
                         line_number_dict,
@@ -137,6 +142,7 @@ class PDF_Creator:
                         self.color,
                         self.margin,
                         self.current_question_number,
+                        self.current_subquestion_number,
                     )
                     self.current_height = exam_part.add_to_pdf()
                 else:

@@ -49,4 +49,5 @@ options_dictionary = {
     "data": "date",
     "klasa": "class",
     "wszystkie": "all",
+    "podpunkt": "subquestion",
 }

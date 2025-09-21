@@ -81,13 +81,39 @@ class Title(Exam_Element):
 
 class Question(Exam_Element):
     def __init__(self, arguments: list[str]):
-        self.words: list[str] = arguments
+        from exam_elements_set import options_dictionary
+
         self.font_size: int = 13
+        self.type: str = "standard"
+        if arguments:
+            option: str = options_dictionary.get(arguments[0])
+            if option == "subquestion":
+                self.font_size = 11
+                self.type = "sub"
+                arguments.pop(0)
+        self.words: list[str] = arguments
+
+    def get_type(self) -> str:
+        return self.type
 
     def get_height(
-        self, width: float, font: str, margin: float, current_question_number: int
+        self,
+        width: float,
+        font: str,
+        margin: float,
+        current_question_number: int,
+        current_subquestion_number: int,
     ) -> float:
-        words = ["Pytanie", str(current_question_number) + "."] + self.words
+        words: list[str] = []
+        if self.type == "standard":
+            words = ["Pytanie", str(current_question_number) + "."] + self.words
+        elif self.type == "sub":
+            words = [
+                str(current_question_number)
+                + "."
+                + str(current_subquestion_number)
+                + "."
+            ] + self.words
         line_spacing: float = self.font_size * 1.2
         lines: list[str] = split_text_to_lines(
             words, width - 2 * margin, font, self.font_size
@@ -105,8 +131,17 @@ class Question(Exam_Element):
         color: tuple[int],
         margin: float,
         current_question_number: int,
+        current_subquestion_number: int,
     ) -> float:
-        self.words = ["Pytanie", str(current_question_number) + "."] + self.words
+        if self.type == "standard":
+            self.words = ["Pytanie", str(current_question_number) + "."] + self.words
+        elif self.type == "sub":
+            self.words = [
+                str(current_question_number)
+                + "."
+                + str(current_subquestion_number)
+                + "."
+            ] + self.words
         line_spacing: float = self.font_size * 1.2
         lines: list[str] = split_text_to_lines(
             self.words, width - 2 * margin, font, self.font_size
@@ -124,7 +159,7 @@ class Question(Exam_Element):
 class Answer(Exam_Element):
     def __init__(self, arguments: list[str]):
         self.words: list[str] = arguments
-        self.font_size: int = 12
+        self.font_size: int = 11
 
     @staticmethod
     def get_all_answers_height(
@@ -735,7 +770,7 @@ class Gaps_To_Fill(Exam_Element):
 
 class Connections(Exam_Element):
     def __init__(self, arguments: list[str]):
-        self.font_size: int = 12
+        self.font_size: int = 11
         self.column_number: int = 0
         if arguments[0].isnumeric():
             self.column_number = int(arguments.pop(0))
@@ -905,6 +940,7 @@ class Exam_Part:
         color: tuple[int],
         margin: float,
         current_question_number: int,
+        current_subquestion_number: int,
     ):
         self.block = block
         self.line_number_dict = line_number_dict
@@ -916,12 +952,17 @@ class Exam_Part:
         self.color = color
         self.margin = margin
         self.current_question_number = current_question_number
+        self.current_subquestion_number = current_subquestion_number
         self.chunk_size = 4
 
     def add_to_pdf(self):
         question = self.block.pop(0)
         question_height: float = question.get_height(
-            self.width, self.font, self.margin, self.current_question_number
+            self.width,
+            self.font,
+            self.margin,
+            self.current_question_number,
+            self.current_subquestion_number,
         )
         exam_element_type_list: list[Exam_Element] = [
             Answer,
@@ -1029,6 +1070,7 @@ class Exam_Part:
             self.color,
             self.margin,
             self.current_question_number,
+            self.current_subquestion_number,
         )
         self.current_height -= 0.2 * cm
         current_horizontal_answer_number: int = 0
