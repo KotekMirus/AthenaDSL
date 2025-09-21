@@ -1,0 +1,19 @@
+konfiguracja
+kolor #1915d6
+czcionka 4
+dane_ucznia imię nazwisko
+losowa_kolejność_pytań
+pytanie W jakim systemie liczbowym komputer przechowuje dane?
+odpowiedź a) Dziesiętnym
+odpowiedź b) Binarnym
+odpowiedź c) Szesnastkowym
+odpowiedź d) Ósemkowym
+pytanie Co oznacza skrót HTTP?
+odpowiedź a) HyperText Transfer Protocol
+odpowiedź b) High Transmission Text Protocol
+odpowiedź c) Hyperlink Text Processing
+odpowiedź d) Host Transfer Technology Protocol
+pytanie Wyjaśnij różnicę między pamięcią RAM a pamięcią ROM.
+pole linie 5
+pytanie Narysuj schemat blokowy przedstawiający działanie pętli while, która sumuje liczby naturalne od 1 do 10.
+pole puste 6

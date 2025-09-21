@@ -10,6 +10,7 @@ from exam_elements_handlers import (
     split_text_to_lines,
 )
 import exam_elements_set
+from pathlib import Path
 import random
 from typing import Any
 
@@ -29,8 +30,10 @@ class PDF_Creator:
         font_path: str = config_custom_values.get("font")
         if not font_path:
             font_path = "fonts/Nunito-Regular.ttf"
-        pdfmetrics.registerFont(TTFont("Font", font_path))
-        self.font: str = "Font"
+        path: Path = Path(font_path)
+        font_name: str = path.stem
+        pdfmetrics.registerFont(TTFont(font_name, font_path))
+        self.font: str = font_name
         self.student_data: list[str] = None
         student_data: list[str] = config_custom_values.get("student_data")
         if student_data:

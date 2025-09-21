@@ -1,0 +1,20 @@
+konfiguracja
+kolor 88 6 92
+czcionka fonts/EBGaramond-Medium.ttf
+tytuł Test z matematyki
+pytanie Ile wynosi pole trójkąta prostokątnego o przyprostokątnych 6 i 3?
+odpowiedź A | 9
+odpowiedź B | 18
+odpowiedź C | 27
+pytanie Rozwiąż równanie: 5x−7=3x+9.
+pole kratka 10
+pytanie Określ, jaka część całego okręgu jest zaznaczona, a następnie zapisz ją jako ułamek zwykły oraz ułamek dziesiętny.
+wykres_kołowy #25 wskazany fragment #75
+pole kratka 2
+pytanie Dana jest funkcja liniowa f(x)=2x−3.
+pytanie podpunkt Oblicz f(4).
+pole kratka 6
+pytanie podpunkt Dla jakiej wartości x funkcja przyjmuje wartość 0?
+pole kratka 6
+pytanie podpunkt Narysuj układ współrzędnych, zaznacz w nim dwa punkty należące do wykresu tej funkcji i narysuj prostą, która przez nie przechodzi.
+pole kratka 16

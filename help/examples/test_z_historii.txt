@@ -1,0 +1,42 @@
+konfiguracja
+dane_ucznia wszystkie
+tytuł Sprawdzian z historii dla klasy VI
+pytanie Kto namalował Bitwę pod Grunwaldem?
+odpowiedź a _ Jan Matejko
+odpowiedź b _ Wojciech Kossak
+odpowiedź c _ Stanisław Wyspiański
+odpowiedź d _ Stanisław Ignacy Witkiewicz
+odpowiedź e _ Józef Chełmoński
+odpowiedź f _ Zdzisław Beksiński
+odpowiedź g _ Wojciech Weiss
+pytanie Na osi czasu zaznacz wydarzenia: chrzest Polski, koronacja Bolesława Chrobrego.
+oś_czasu zakres 950,1050 jednostka 10
+pytanie Opisz jakie wydarzenia przyjmuje się za umowny koniec średniowiecza.
+pole linie 4
+pytanie Na poniższym wykresie kołowym przedstawiono strukturę społeczeństwa w średniowiecznej Europie. Uzupełnij brakujące miejsce, wpisując odpowiednią grupę społeczną.
+wykres_kołowy #77 chłopi #12 _ #8 rycerstwo/szlachta #3 duchowieństwo
+pytanie Zaznacz czy zdanie jest prawdziwe czy fałszywe.
+tabela_pf Królowie i rycerze pisali książki, bo tylko oni potrafili czytać i pisać.
+tabela_pf W średniowieczu większość ludzi mieszkała na wsiach i zajmowała się rolnictwem.
+tabela_pf W średniowieczu nie było żadnych szkół ani uniwersytetów.
+pytanie Przeczytaj tekst i odpowiedz na pytania.
+tekst W 966 roku książę Mieszko I przyjął chrzest, co oznaczało włączenie Polski do świata chrześcijańskiej Europy. Dzięki temu powstały pierwsze kościoły, a także zaczęto rozwijać szkoły i piśmiennictwo.
+pytanie podpunkt W którym wieku książę Mieszko I przyjął chrzest?
+pole linie 1
+pytanie podpunkt Czy Polska zyskała na włączeniu jej do świata chrześcijańskiego? Odpowiedź uzasadnij.
+pole linie 2
+pytanie Wstaw pasujące wyrazy w odpowiednie luki.
+luki opcje krucjaty cechy łacina uniwersytety pielgrzymki
+luki treść W średniowieczu powstały pierwsze _, w których uczono różnych przedmiotów i posługiwano się językiem zwanym _. W tym okresie ludzie często podróżowali w celach religijnych - były to _ do miejsc świętych. Innym ważnym zjawiskiem były wyprawy zbrojne do Ziemi Świętej, nazywane _. W miastach natomiast rzemieślnicy tworzyli specjalne organizacje zwane _, które chroniły ich prawa i dbały o jakość wyrobów.
+pytanie Połącz władcę z dynastią, z której się wywodzi.
+połączenia 1 Otton I
+połączenia 1 Karol Wielki
+połączenia 1 Wilhelm Zdobywca
+połączenia 1 Bolesław Chrobry
+połączenia 2 Karolingowie X
+połączenia 2 Piastowie
+połączenia 2 Ludolfingowie
+połączenia 2 Normanowie
+pytanie Wybierz, który z wyrazów pasuje do danej luki.
+luki treść numeracja W średniowiecznym mieście _ znajdował się na środku rynku. _ sprzedawali tam swoje towary, a _ pilnowali porządku. Do miasta często przybywali _, którzy chcieli dostać się na _. Nad wszystkim czuwał _.
+luki opcje numeracja # ratusz klasztor kuźnia # Rycerze Rzemieślnicy Zakonnicy # strażnicy uczniowie chłopi # książęta rolnicy pielgrzymi # targ modlitwę zamek # biskup burmistrz kupiec

@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 from typing import Any
 
 
@@ -13,7 +14,20 @@ class Configuration:
     def assign_values(self, config_elements: dict[str : list[str]]) -> None:
         font_path: list[str] = config_elements.get("font")
         if font_path:
-            self.font = font_path[0]
+            if font_path[0] == "1":
+                self.font = "fonts/Nunito-Regular.ttf"
+            elif font_path[0] == "2":
+                self.font = "fonts/EBGaramond-Medium.ttf"
+            elif font_path[0] == "3":
+                self.font = "fonts/Lato-Regular.ttf"
+            elif font_path[0] == "4":
+                self.font = "fonts/RobotoMono-Regular.ttf"
+            else:
+                path: Path = Path(font_path[0])
+                if path.is_file():
+                    self.font = font_path[0]
+                else:
+                    raise Exception("Error in Configuration (font)")
         if font_path == []:
             raise Exception("Error in Configuration (font)")
         color_values: list[str] = config_elements.get("color")
