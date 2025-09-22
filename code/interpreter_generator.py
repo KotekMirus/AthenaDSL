@@ -46,7 +46,21 @@ class PDF_Creator:
                 for k, v in exam_elements_set.exam_elements_dictionary.items()
                 if v is Question
             ][0]
-            random.shuffle(parsed_document[question_block_name])
+            groups: list[list[list[list[Exam_Element, int]]]] = []
+            current_group: list[list[list[Exam_Element, int]]] = []
+            for block in parsed_document[question_block_name]:
+                question_obj = block[0][0]
+                if question_obj.get_type() == "standard":
+                    if current_group:
+                        groups.append(current_group)
+                    current_group = [block]
+                elif question_obj.get_type() == "sub":
+                    current_group.append(block)
+            if current_group:
+                groups.append(current_group)
+            random.shuffle(groups)
+            shuffled_question_blocks = [b for group in groups for b in group]
+            parsed_document[question_block_name] = shuffled_question_blocks
         self.margin: float = 1.5 * cm
         self.parsed_document: dict[str, list[list[list[Exam_Element, int]]]] = (
             parsed_document
